@@ -453,7 +453,7 @@ class _LandingScreenState extends State<LandingScreen>
                       child: Align(
                         alignment: Alignment.center,
                         child: _buildInstant3DModel(
-                          src: 'images/jcb_backhoe_loader.glb',
+                          src: 'assets/images/jcb_backhoe_loader.glb',
                           height: isNarrow ? 400 : 520,
                         ),
                       ),

@@ -264,7 +264,7 @@ class _RoadRollerPageState extends State<RoadRollerPage>
                   return Transform.translate(
                     offset: Offset(0, sin(_floatingController.value * pi) * 25),
                     child: _build3DModel(
-                      src: 'images/road_roller_truck.glb',
+                      src: 'assets/images/road_roller_truck.glb',
                       height: isMobile ? 300 : 450,
                       width: isMobile ? screenWidth * 0.9 : 700,
                     ),
