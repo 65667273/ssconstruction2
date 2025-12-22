@@ -1,10 +1,11 @@
-// ===== Responsive About Section with Modern Animations =====
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:confetti/confetti.dart';
+import 'package:ss/contact.dart';
 
 class AboutSection extends StatefulWidget {
   const AboutSection({super.key});
-
   @override
   State<AboutSection> createState() => _AboutSectionState();
 }
@@ -15,6 +16,9 @@ class _AboutSectionState extends State<AboutSection>
   late AnimationController _floatingController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late ConfettiController _confettiController;
+
+  bool _show3DModel = false;
 
   final List<Map<String, dynamic>> bullets = [
     {
@@ -35,53 +39,61 @@ class _AboutSectionState extends State<AboutSection>
     },
   ];
 
-  final List<Map<String, String>> licenses = [
-    {'name': 'PWD License Holder', 'badge': 'Certified'},
-    {'name': 'NMC License Holder', 'badge': 'Active'},
-    {'name': 'Zilla Parishad License Holder', 'badge': 'Verified'},
-  ];
-
-  final List<Map<String, String>> owners = [
-    {'name': 'Mr. Niklesh Kapse', 'role': 'Co-Owner', 'initial': 'NK'},
-    {'name': 'Mr. Rohit Ganvir', 'role': 'Co-Owner', 'initial': 'RG'},
+  final List<Map<String, dynamic>> stats = [
+    {'value': '10+', 'label': 'Engineers', 'icon': Icons.engineering},
+    {'value': '500+', 'label': 'Workers', 'icon': Icons.people_alt},
+    {'value': '50+', 'label': 'Projects', 'icon': Icons.assignment_turned_in},
+    {'value': '100%', 'label': 'Satisfaction', 'icon': Icons.thumb_up},
   ];
 
   @override
   void initState() {
     super.initState();
-
     _mainController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
 
     _floatingController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
-      ),
+    _confettiController = ConfettiController(
+      duration: const Duration(milliseconds: 500),
     );
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _mainController,
-            curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
-          ),
-        );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _mainController, curve: Curves.easeIn));
 
-    _mainController.forward();
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _mainController, curve: Curves.easeOut));
+
+    // Delayed initialization for better performance
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _mainController.forward();
+        _confettiController.play();
+      }
+    });
+
+    // Lazy load 3D model
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() => _show3DModel = true);
+      }
+    });
   }
 
   @override
   void dispose() {
     _mainController.dispose();
     _floatingController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
@@ -89,35 +101,60 @@ class _AboutSectionState extends State<AboutSection>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth > 1200;
+        final isDesktop = constraints.maxWidth > 1024;
         final isTablet =
-            constraints.maxWidth > 768 && constraints.maxWidth <= 1200;
-        final isMobile = constraints.maxWidth <= 768;
+            constraints.maxWidth > 600 && constraints.maxWidth <= 1024;
+        final isMobile = constraints.maxWidth <= 600;
 
         return FadeTransition(
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: Container(
-              constraints: BoxConstraints(maxWidth: 1400),
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 20 : (isTablet ? 40 : 60),
-                vertical: isMobile ? 40 : 60,
-              ),
-              child: Column(
-                children: [
-                  // Section Header with Animated Background
-                  _buildSectionHeader(isMobile),
-                  SizedBox(height: isMobile ? 40 : 60),
+            child: SingleChildScrollView(
+              physics: ClampingScrollPhysics(),
+              child: Container(
+                constraints: BoxConstraints(maxWidth: 1400),
+                margin: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
+                padding: EdgeInsets.symmetric(vertical: isMobile ? 32 : 48),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Confetti effect - only show briefly
+                    if (!isMobile)
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: SizedBox(
+                          height: 100,
+                          width: 100,
+                          child: ConfettiWidget(
+                            confettiController: _confettiController,
+                            blastDirection: math.pi / 2,
+                            maxBlastForce: 15,
+                            minBlastForce: 10,
+                            emissionFrequency: 0.1,
+                            numberOfParticles: 10,
+                            gravity: 0.15,
+                          ),
+                        ),
+                      ),
 
-                  // Main Content Layout
-                  if (isDesktop)
-                    _buildDesktopLayout()
-                  else if (isTablet)
-                    _buildTabletLayout()
-                  else
-                    _buildMobileLayout(),
-                ],
+                    // Section Header
+                    _buildSectionHeader(isMobile, isTablet),
+                    SizedBox(height: isMobile ? 32 : 48),
+
+                    // Stats Cards
+                    _buildStatsSection(isMobile, isDesktop, isTablet),
+                    SizedBox(height: isMobile ? 32 : 48),
+
+                    // Main Content Layout
+                    if (isDesktop)
+                      _buildDesktopLayout()
+                    else if (isTablet)
+                      _buildTabletLayout()
+                    else
+                      _buildMobileLayout(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -126,102 +163,57 @@ class _AboutSectionState extends State<AboutSection>
     );
   }
 
-  Widget _buildSectionHeader(bool isMobile) {
+  Widget _buildSectionHeader(bool isMobile, bool isTablet) {
     return AnimatedBuilder(
       animation: _floatingController,
       builder: (context, child) {
-        return Stack(
-          children: [
-            // Animated Background Blur
-            Positioned(
-              right: -50,
-              top: -30,
-              child: Transform.translate(
-                offset: Offset(
-                  math.sin(_floatingController.value * 2 * math.pi) * 20,
-                  math.cos(_floatingController.value * 2 * math.pi) * 20,
-                ),
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [
-                        Color(0xFFFAAB0C).withOpacity(0.2),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            child!,
-          ],
+        return Transform.translate(
+          offset: Offset(
+            0,
+            math.sin(_floatingController.value * 2 * math.pi) * 3,
+          ),
+          child: child,
         );
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(isMobile ? 8 : 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFFAAB0C), Color(0xFFFF8C00)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFFAAB0C).withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
+          SizedBox(height: 100),
+          Text(
+            'About SS Construction',
+            style: TextStyle(
+              fontSize: isMobile ? 28 : (isTablet ? 36 : 48),
+              fontWeight: FontWeight.w900,
+              foreground: Paint()
+                ..shader = LinearGradient(
+                  colors: [
+                    Color(0xFFFAAB0C),
+                    Color(0xFFFF8C00),
+                    Color(0xFFFFA726),
                   ],
-                ),
-                child: Icon(
-                  Icons.business_center,
-                  color: Colors.white,
-                  size: isMobile ? 24 : 28,
-                ),
+                ).createShader(Rect.fromLTWH(0, 0, 400, 70)),
+              letterSpacing: -0.5,
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: 12),
+          Container(
+            width: isMobile ? 120 : 180,
+            height: 3,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFAAB0C), Color(0xFFFF8C00)],
               ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'About Us',
-                      style: TextStyle(
-                        fontSize: isMobile ? 28 : 36,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Container(
-                      height: 4,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFFAAB0C), Colors.transparent],
-                        ),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           SizedBox(height: 16),
           Text(
-            'Building Tomorrow\'s Infrastructure Today',
+            'Building Tomorrow\'s Infrastructure Today with Excellence and Innovation',
             style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
-              color: Colors.white60,
-              letterSpacing: 0.5,
+              fontSize: isMobile ? 14 : (isTablet ? 16 : 18),
+              color: Colors.white.withOpacity(0.85),
+              height: 1.5,
             ),
           ),
         ],
@@ -229,19 +221,58 @@ class _AboutSectionState extends State<AboutSection>
     );
   }
 
+  Widget _buildStatsSection(bool isMobile, bool isDesktop, bool isTablet) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Wrap(
+          spacing: isMobile ? 12 : 16,
+          runSpacing: isMobile ? 12 : 16,
+          children: stats.asMap().entries.map((entry) {
+            final index = entry.key;
+            final stat = entry.value;
+            return SizedBox(
+              width: isMobile
+                  ? (constraints.maxWidth - 12) / 2
+                  : isTablet
+                  ? (constraints.maxWidth - 48) / 4
+                  : (constraints.maxWidth - 48) / 4,
+              child: AnimatedStatsCard(
+                value: stat['value']!,
+                label: stat['label']!,
+                icon: stat['icon']!,
+                index: index,
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
   Widget _buildDesktopLayout() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(flex: 6, child: _buildContentColumn()),
-        SizedBox(width: 40),
         Expanded(
-          flex: 4,
+          flex: 5,
           child: Column(
             children: [
-              AnimatedStrengthCard(floatingController: _floatingController),
-              SizedBox(height: 24),
-              _buildQuickStats(),
+              _build3DModel(),
+              SizedBox(height: 32),
+              _buildOwnerCards(false),
+            ],
+          ),
+        ),
+        SizedBox(width: 32),
+        Expanded(
+          flex: 7,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMissionVision(false),
+              SizedBox(height: 32),
+              _buildSpecialization(),
+              SizedBox(height: 32),
             ],
           ),
         ),
@@ -252,11 +283,14 @@ class _AboutSectionState extends State<AboutSection>
   Widget _buildTabletLayout() {
     return Column(
       children: [
-        _buildContentColumn(),
-        SizedBox(height: 40),
-        AnimatedStrengthCard(floatingController: _floatingController),
-        SizedBox(height: 24),
-        _buildQuickStats(),
+        _build3DModel(),
+        SizedBox(height: 32),
+        _buildOwnerCards(false),
+        SizedBox(height: 32),
+        _buildMissionVision(false),
+        SizedBox(height: 32),
+        _buildSpecialization(),
+        SizedBox(height: 32),
       ],
     );
   }
@@ -264,983 +298,471 @@ class _AboutSectionState extends State<AboutSection>
   Widget _buildMobileLayout() {
     return Column(
       children: [
-        _buildContentColumn(),
-        SizedBox(height: 32),
-        AnimatedStrengthCard(floatingController: _floatingController),
-        SizedBox(height: 20),
-        _buildQuickStats(),
+        _build3DModel(),
+        SizedBox(height: 24),
+        _buildOwnerCards(true),
+        SizedBox(height: 24),
+        _buildMissionVision(true),
+        SizedBox(height: 24),
+        _buildSpecialization(),
+        SizedBox(height: 24),
       ],
     );
   }
 
-  Widget _buildContentColumn() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Introduction with Gradient Background
-        Container(
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.08),
-                Colors.white.withOpacity(0.02),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: Text(
-            'SS Construction is a trusted name in Nagpur infrastructure and real estate development sector. We deliver durable, legally compliant projects with unmatched quality.',
-            style: TextStyle(
-              height: 1.8,
-              fontSize: 15,
-              color: Colors.white.withOpacity(0.9),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
-        SizedBox(height: 32),
-
-        // Specialization bullets with modern cards
-        ...List.generate(bullets.length, (index) {
-          return ModernBulletCard(
-            text: bullets[index]['text']!,
-            icon: bullets[index]['icon']!,
-            color: bullets[index]['color']!,
-            delay: Duration(milliseconds: 300 + (index * 150)),
-          );
-        }),
-
-        SizedBox(height: 40),
-
-        // Licenses Section
-        _buildSubSection(
-          'Licenses & Credentials',
-          Icons.workspace_premium,
-          children: List.generate(licenses.length, (index) {
-            return ModernLicenseBadge(
-              name: licenses[index]['name']!,
-              badge: licenses[index]['badge']!,
-              delay: Duration(milliseconds: 700 + (index * 100)),
-            );
-          }),
-        ),
-
-        SizedBox(height: 40),
-
-        // Owners Section
-        _buildSubSection(
-          'Leadership',
-          Icons.engineering,
-          children: List.generate(owners.length, (index) {
-            return ModernOwnerCard(
-              name: owners[index]['name']!,
-              role: owners[index]['role']!,
-              initial: owners[index]['initial']!,
-              delay: Duration(milliseconds: 1000 + (index * 150)),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubSection(
-    String title,
-    IconData icon, {
-    required List<Widget> children,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Color(0xFFFAAB0C).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, size: 20, color: Color(0xFFFAAB0C)),
-            ),
-            SizedBox(width: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 20),
-        ...children,
-      ],
-    );
-  }
-
-  Widget _buildQuickStats() {
+  Widget _build3DModel() {
     return Container(
-      padding: EdgeInsets.all(24),
+      height: 300,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFFFAAB0C).withOpacity(0.1),
-            Color(0xFFFF8C00).withOpacity(0.05),
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1E1E2E), Color(0xFF2D2D44)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFFFAAB0C).withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            if (_show3DModel)
+              ModelViewer(
+                src: 'assets/images/abhi.glb',
+                alt: "3D Construction Model",
+                ar: false,
+                autoRotate: true,
+                cameraControls: true,
+                disableZoom: true,
+                backgroundColor: Colors.transparent,
+                cameraOrbit: "45deg 75deg 3m",
+                fieldOfView: "35deg",
+                loading: Loading.lazy,
+              ),
+            if (!_show3DModel)
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Color(0xFFFAAB0C)),
+                    SizedBox(height: 16),
+                    Text(
+                      'Loading 3D Model...',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            if (_show3DModel)
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.threed_rotation,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Interactive 3D',
+                        style: TextStyle(color: Colors.white, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildOwnerCards(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Leadership Team',
+          style: TextStyle(
+            fontSize: isMobile ? 20 : 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 16),
+        isMobile
+            ? Column(
+                children: [
+                  _buildOwnerCard(
+                    name: 'Mr. Niklesh Kapse',
+                    role: 'Co-Owner & Technical Director',
+                    experience: '8 Years Experience',
+                    color: Color(0xFF6366F1),
+                    isMobile: true,
+                  ),
+                  SizedBox(height: 16),
+                  _buildOwnerCard(
+                    name: 'Mr. Rohit Ganvir',
+                    role: 'Co-Owner & Operations Head',
+                    experience: '7 Years Experience',
+                    color: Color(0xFF10B981),
+                    isMobile: true,
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: _buildOwnerCard(
+                      name: 'Mr. Niklesh Kapse',
+                      role: 'Co-Owner & Technical Director',
+                      experience: '8 Years Experience',
+                      color: Color(0xFF6366F1),
+                      isMobile: false,
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: _buildOwnerCard(
+                      name: 'Mr. Rohit Ganvir',
+                      role: 'Co-Owner & Operations Head',
+                      experience: '7 Years Experience',
+                      color: Color(0xFF10B981),
+                      isMobile: false,
+                    ),
+                  ),
+                ],
+              ),
+      ],
+    );
+  }
+
+  Widget _buildOwnerCard({
+    required String name,
+    required String role,
+    required String experience,
+    required Color color,
+    required bool isMobile,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFFFAAB0C).withOpacity(0.3)),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
         children: [
-          Text(
-            '🏆 Award Winning Team',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          Container(
+            width: isMobile ? 60 : 70,
+            height: isMobile ? 60 : 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [color, color.withOpacity(0.7)]),
+            ),
+            child: Icon(
+              Icons.person,
+              size: isMobile ? 30 : 35,
               color: Colors.white,
             ),
           ),
           SizedBox(height: 12),
           Text(
-            'Recognized for excellence in construction and timely project delivery',
+            name,
+            style: TextStyle(
+              fontSize: isMobile ? 15 : 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.white60, height: 1.5),
+          ),
+          SizedBox(height: 6),
+          Text(
+            role,
+            style: TextStyle(
+              fontSize: isMobile ? 12 : 13,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 6),
+          Text(
+            experience,
+            style: TextStyle(
+              fontSize: isMobile ? 11 : 12,
+              color: Colors.white70,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
-}
 
-// ===== Modern Bullet Card =====
-class ModernBulletCard extends StatefulWidget {
-  final String text;
-  final IconData icon;
-  final Color color;
-  final Duration delay;
-
-  const ModernBulletCard({
-    super.key,
-    required this.text,
-    required this.icon,
-    required this.color,
-    required this.delay,
-  });
-
-  @override
-  State<ModernBulletCard> createState() => _ModernBulletCardState();
-}
-
-class _ModernBulletCardState extends State<ModernBulletCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(-0.2, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: MouseRegion(
-            onEnter: (_) => setState(() => _isHovered = true),
-            onExit: (_) => setState(() => _isHovered = false),
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 300),
-              margin: EdgeInsets.only(bottom: 16),
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: _isHovered
-                      ? [
-                          widget.color.withOpacity(0.15),
-                          widget.color.withOpacity(0.05),
-                        ]
-                      : [
-                          Colors.white.withOpacity(0.06),
-                          Colors.white.withOpacity(0.02),
-                        ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: _isHovered
-                      ? widget.color.withOpacity(0.5)
-                      : Colors.white.withOpacity(0.1),
-                  width: 2,
-                ),
-                boxShadow: _isHovered
-                    ? [
-                        BoxShadow(
-                          color: widget.color.withOpacity(0.2),
-                          blurRadius: 20,
-                          spreadRadius: 0,
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Row(
+  Widget _buildMissionVision(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Our Mission & Vision',
+          style: TextStyle(
+            fontSize: isMobile ? 22 : 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 16),
+        isMobile
+            ? Column(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [widget.color, widget.color.withOpacity(0.7)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: widget.color.withOpacity(0.4),
-                          blurRadius: 12,
-                          spreadRadius: 0,
-                        ),
-                      ],
+                  _buildMissionCard(
+                    icon: Icons.flag,
+                    title: 'Mission',
+                    description:
+                        'To deliver superior construction services that exceed client expectations through innovation, quality, and integrity.',
+                    color: Color(0xFF6366F1),
+                    isMobile: true,
+                  ),
+                  SizedBox(height: 16),
+                  _buildMissionCard(
+                    icon: Icons.remove_red_eye,
+                    title: 'Vision',
+                    description:
+                        'To be the most trusted construction partner in Central India, setting benchmarks in quality and sustainability.',
+                    color: Color(0xFF10B981),
+                    isMobile: true,
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: _buildMissionCard(
+                      icon: Icons.flag,
+                      title: 'Mission',
+                      description:
+                          'To deliver superior construction services that exceed client expectations through innovation, quality, and integrity.',
+                      color: Color(0xFF6366F1),
+                      isMobile: false,
                     ),
-                    child: Icon(widget.icon, size: 24, color: Colors.white),
                   ),
                   SizedBox(width: 16),
                   Expanded(
-                    child: Text(
-                      widget.text,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 15,
-                        height: 1.5,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: _buildMissionCard(
+                      icon: Icons.remove_red_eye,
+                      title: 'Vision',
+                      description:
+                          'To be the most trusted construction partner in Central India, setting benchmarks in quality and sustainability.',
+                      color: Color(0xFF10B981),
+                      isMobile: false,
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
+      ],
+    );
+  }
+
+  Widget _buildMissionCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required bool isMobile,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withOpacity(0.1), Colors.transparent],
         ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
-    );
-  }
-}
-
-// ===== Modern License Badge =====
-class ModernLicenseBadge extends StatefulWidget {
-  final String name;
-  final String badge;
-  final Duration delay;
-
-  const ModernLicenseBadge({
-    super.key,
-    required this.name,
-    required this.badge,
-    required this.delay,
-  });
-
-  @override
-  State<ModernLicenseBadge> createState() => _ModernLicenseBadgeState();
-}
-
-class _ModernLicenseBadgeState extends State<ModernLicenseBadge>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 700),
-      vsync: this,
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(-0.3, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-
-    Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: Container(
-          margin: EdgeInsets.only(bottom: 12),
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFFAAB0C).withOpacity(0.1), Colors.transparent],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Color(0xFFFAAB0C).withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFAAB0C).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.verified, size: 20, color: Color(0xFFFAAB0C)),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  widget.name,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Color(0xFFFAAB0C).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Color(0xFFFAAB0C).withOpacity(0.5)),
-                ),
-                child: Text(
-                  widget.badge,
-                  style: TextStyle(
-                    color: Color(0xFFFAAB0C),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ===== Modern Owner Card =====
-class ModernOwnerCard extends StatefulWidget {
-  final String name;
-  final String role;
-  final String initial;
-  final Duration delay;
-
-  const ModernOwnerCard({
-    super.key,
-    required this.name,
-    required this.role,
-    required this.initial,
-    required this.delay,
-  });
-
-  @override
-  State<ModernOwnerCard> createState() => _ModernOwnerCardState();
-}
-
-class _ModernOwnerCardState extends State<ModernOwnerCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-    _scaleAnimation = Tween<double>(
-      begin: 0.9,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-
-    Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() => _isHovered = false),
-          child: AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            margin: EdgeInsets.only(bottom: 16),
-            padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: _isHovered
-                    ? [
-                        Color(0xFFFAAB0C).withOpacity(0.15),
-                        Color(0xFFFF8C00).withOpacity(0.05),
-                      ]
-                    : [
-                        Colors.white.withOpacity(0.06),
-                        Colors.white.withOpacity(0.02),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _isHovered
-                    ? Color(0xFFFAAB0C).withOpacity(0.5)
-                    : Colors.white.withOpacity(0.1),
-                width: 2,
-              ),
-              boxShadow: _isHovered
-                  ? [
-                      BoxShadow(
-                        color: Color(0xFFFAAB0C).withOpacity(0.2),
-                        blurRadius: 20,
-                      ),
-                    ]
-                  : [],
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFFAAB0C), Color(0xFFFF8C00)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0xFFFAAB0C).withOpacity(0.4),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      widget.initial,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.name,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF10B981),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            widget.role,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.white.withOpacity(0.3),
-                ),
-              ],
+            child: Icon(icon, color: color, size: 20),
+          ),
+          SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
+          SizedBox(height: 8),
+          Text(
+            description,
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+              fontSize: isMobile ? 13 : 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecialization() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Our Specialization',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 16),
+        ...bullets
+            .map(
+              (bullet) => Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: AnimatedSpecializationCard(
+                  text: bullet['text']!,
+                  icon: bullet['icon']!,
+                  color: bullet['color']!,
+                ),
+              ),
+            )
+            .toList(),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required VoidCallback onTap,
+    required bool isMobile,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 20 : 24,
+          vertical: isMobile ? 12 : 14,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [color, color.withOpacity(0.7)]),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 12,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: isMobile ? 16 : 18),
+            SizedBox(width: 8),
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: isMobile ? 13 : 14,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ===== Animated Strength Card =====
-class AnimatedStrengthCard extends StatefulWidget {
-  final AnimationController floatingController;
-
-  const AnimatedStrengthCard({super.key, required this.floatingController});
-
-  @override
-  State<AnimatedStrengthCard> createState() => _AnimatedStrengthCardState();
-}
-
-class _AnimatedStrengthCardState extends State<AnimatedStrengthCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-
-  final List<Map<String, dynamic>> stats = [
-    {
-      'label': 'Engineers',
-      'value': '10',
-      'icon': Icons.engineering,
-      'color': Color(0xFF6366F1),
-    },
-    {
-      'label': 'Supervisors',
-      'value': '15',
-      'icon': Icons.supervisor_account,
-      'color': Color(0xFFEC4899),
-    },
-    {
-      'label': 'Skilled Labour',
-      'value': '500+',
-      'icon': Icons.construction_outlined,
-      'color': Color(0xFF10B981),
-    },
-    {
-      'label': 'Modern Machinery',
-      'value': 'Owned Fleet',
-      'icon': Icons.precision_manufacturing,
-      'color': Color(0xFFF59E0B),
-    },
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.1),
-                    Colors.white.withOpacity(0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFFFAAB0C).withOpacity(0.1),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  // Animated Background
-                  Positioned(
-                    top: -50,
-                    right: -50,
-                    child: AnimatedBuilder(
-                      animation: widget.floatingController,
-                      builder: (context, child) {
-                        return Transform.rotate(
-                          angle: widget.floatingController.value * 2 * math.pi,
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              gradient: RadialGradient(
-                                colors: [
-                                  Color(0xFFFAAB0C).withOpacity(0.2),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFFFAAB0C),
-                                    Color(0xFFFF8C00),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0xFFFAAB0C).withOpacity(0.4),
-                                    blurRadius: 12,
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.groups_3,
-                                color: Colors.white,
-                                size: 28,
-                              ),
-                            ),
-                            SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Our Strength',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 22,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Expert Team & Resources',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white60,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 28),
-
-                        // Stats
-                        ...List.generate(stats.length, (index) {
-                          return AnimatedStatRow(
-                            label: stats[index]['label']!,
-                            value: stats[index]['value']!,
-                            icon: stats[index]['icon']!,
-                            color: stats[index]['color']!,
-                            delay: Duration(milliseconds: 600 + (index * 150)),
-                          );
-                        }),
-
-                        SizedBox(height: 28),
-
-                        // CTA Button
-                        AnimatedCTAButton(delay: Duration(milliseconds: 1200)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-// ===== Animated Stat Row =====
-class AnimatedStatRow extends StatefulWidget {
-  final String label;
+class AnimatedStatsCard extends StatefulWidget {
   final String value;
+  final String label;
   final IconData icon;
-  final Color color;
-  final Duration delay;
+  final int index;
 
-  const AnimatedStatRow({
+  const AnimatedStatsCard({
     super.key,
-    required this.label,
     required this.value,
+    required this.label,
     required this.icon,
-    required this.color,
-    required this.delay,
+    required this.index,
   });
 
   @override
-  State<AnimatedStatRow> createState() => _AnimatedStatRowState();
+  State<AnimatedStatsCard> createState() => _AnimatedStatsCardState();
 }
 
-class _AnimatedStatRowState extends State<AnimatedStatRow>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-  bool _isHovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.5, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
-
-    Future.delayed(widget.delay, () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _isHovered = true),
-          onExit: (_) => setState(() => _isHovered = false),
-          child: AnimatedContainer(
-            duration: Duration(milliseconds: 300),
-            margin: EdgeInsets.only(bottom: 14),
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: _isHovered
-                    ? [
-                        widget.color.withOpacity(0.15),
-                        widget.color.withOpacity(0.05),
-                      ]
-                    : [
-                        Colors.white.withOpacity(0.08),
-                        Colors.white.withOpacity(0.02),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _isHovered
-                    ? widget.color.withOpacity(0.5)
-                    : Colors.white.withOpacity(0.15),
-                width: 2,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [widget.color, widget.color.withOpacity(0.7)],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: widget.color.withOpacity(0.4),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: Icon(widget.icon, color: Colors.white, size: 20),
-                ),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    widget.label,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        widget.color.withOpacity(0.3),
-                        widget.color.withOpacity(0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: widget.color.withOpacity(0.5)),
-                  ),
-                  child: Text(
-                    widget.value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ===== Animated CTA Button =====
-class AnimatedCTAButton extends StatefulWidget {
-  final Duration delay;
-
-  const AnimatedCTAButton({super.key, required this.delay});
-
-  @override
-  State<AnimatedCTAButton> createState() => _AnimatedCTAButtonState();
-}
-
-class _AnimatedCTAButtonState extends State<AnimatedCTAButton>
+class _AnimatedStatsCardState extends State<AnimatedStatsCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  bool _isHovered = false;
+  late int _displayValue;
 
   @override
   void initState() {
     super.initState();
+    _displayValue = 0;
+
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: Duration(milliseconds: 1000),
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
 
-    Future.delayed(widget.delay, () {
+    Future.delayed(Duration(milliseconds: 200 + widget.index * 150), () {
       if (mounted) _controller.forward();
+    });
+
+    _controller.addListener(() {
+      if (mounted) {
+        final valueStr = widget.value.replaceAll(RegExp(r'[^0-9]'), '');
+        if (valueStr.isNotEmpty) {
+          final targetValue = int.parse(valueStr);
+          setState(() {
+            _displayValue = (_controller.value * targetValue).toInt();
+          });
+        }
+      }
     });
   }
 
@@ -1254,87 +776,114 @@ class _AnimatedCTAButtonState extends State<AnimatedCTAButton>
   Widget build(BuildContext context) {
     return ScaleTransition(
       scale: _scaleAnimation,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 300),
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: _isHovered
-                  ? [Color(0xFFFF8C00), Color(0xFFFAAB0C)]
-                  : [Color(0xFFFAAB0C), Color(0xFFFF8C00)],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFFFAAB0C).withOpacity(_isHovered ? 0.5 : 0.3),
-                blurRadius: _isHovered ? 20 : 15,
-                spreadRadius: _isHovered ? 2 : 0,
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withOpacity(0.1),
+              Colors.white.withOpacity(0.05),
             ],
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(14),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_month, size: 22, color: Colors.white),
-                    SizedBox(width: 12),
-                    Text(
-                      'Book a Site Visit',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      transform: Matrix4.translationValues(
-                        _isHovered ? 4 : 0,
-                        0,
-                        0,
-                      ),
-                      child: Icon(
-                        Icons.arrow_forward,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(widget.icon, color: Color(0xFFFAAB0C), size: 20),
+            ),
+            SizedBox(height: 12),
+            Text(
+              widget.value.contains('+') || widget.value.contains('%')
+                  ? widget.value.contains('+')
+                        ? '$_displayValue+'
+                        : '$_displayValue%'
+                  : widget.value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                foreground: Paint()
+                  ..shader = LinearGradient(
+                    colors: [Color(0xFFFAAB0C), Color(0xFFFF8C00)],
+                  ).createShader(Rect.fromLTWH(0, 0, 100, 50)),
               ),
             ),
-          ),
+            SizedBox(height: 6),
+            Text(
+              widget.label,
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ===== Section Title (Reusable) =====
-class SectionTitle extends StatelessWidget {
-  final String title;
+class AnimatedSpecializationCard extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final Color color;
 
-  const SectionTitle({super.key, required this.title});
+  const AnimatedSpecializationCard({
+    super.key,
+    required this.text,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.08),
+            Colors.white.withOpacity(0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [color, color.withOpacity(0.7)]),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

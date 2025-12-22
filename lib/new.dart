@@ -174,14 +174,6 @@ class _InteractiveFeaturesSectionState extends State<InteractiveFeaturesSection>
                       const ProgressTrackerWidget(),
                       SizedBox(height: isMobile ? 40 : 60),
 
-                      // EMI Calculator
-                      const EMICalculatorWidget(),
-                      SizedBox(height: isMobile ? 40 : 60),
-
-                      // Book Site Visit Button
-                      _buildBookSiteVisit(),
-                      SizedBox(height: isMobile ? 40 : 60),
-
                       // Blog/Knowledge Section
                       const BlogKnowledgeWidget(),
                       SizedBox(height: isMobile ? 40 : 60),

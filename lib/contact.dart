@@ -43,29 +43,30 @@ class _ContactSectionState extends State<ContactSection>
     ContactMethod(
       icon: Icons.location_on,
       title: 'Office Address',
-      value: 'Wardha, Maharashtra, India',
+      value: ' Nagpur, Maharashtra 441501',
       actionText: 'Get Directions',
       gradient: [const Color(0xFFEF4444), const Color(0xFFF87171)],
       accentColor: const Color(0xFFEF4444),
-      link: 'https://maps.google.com/?q=Wardha,Maharashtra',
+      link:
+          'https://maps.google.com/?q=Nagpur+Properties+301+Sai+Shraddha+Utkarsh+Society+Dabha+Rd+Vayusena+Nagar+Nagpur+Maharashtra+441501',
     ),
     ContactMethod(
       icon: Icons.phone,
       title: 'Phone Number',
-      value: '+91 86982 30709',
+      value: '+91 98233 88866',
       actionText: 'Call Now',
       gradient: [const Color(0xFF3B82F6), const Color(0xFF60A5FA)],
       accentColor: const Color(0xFF3B82F6),
-      link: 'tel:+918698230709',
+      link: 'tel:+919823388866',
     ),
     ContactMethod(
       icon: Icons.chat,
       title: 'WhatsApp',
-      value: '+91 86982 30709',
+      value: '+91 78880 28866',
       actionText: 'Chat on WhatsApp',
       gradient: [const Color(0xFF10B981), const Color(0xFF34D399)],
       accentColor: const Color(0xFF10B981),
-      link: 'https://wa.me/918698230709',
+      link: 'https://wa.me/917888028866',
     ),
     ContactMethod(
       icon: Icons.email,
@@ -120,6 +121,9 @@ class _ContactSectionState extends State<ContactSection>
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -135,21 +139,29 @@ class _ContactSectionState extends State<ContactSection>
       child: Stack(
         children: [
           _buildAnimatedBackground(),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 20),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1400),
-                child: Column(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 70),
-                    _buildContactMethods(),
-                    const SizedBox(height: 60),
-                    _buildMapSection(),
-                    const SizedBox(height: 60),
-                    _buildCTASection(),
-                  ],
+          SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: isMobile ? 50 : 100,
+                horizontal: isMobile ? 16 : 20,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1400),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHeader(isMobile),
+                      SizedBox(height: isMobile ? 40 : 70),
+                      _buildContactMethods(isMobile),
+                      SizedBox(height: isMobile ? 40 : 60),
+                      _buildMapSection(isMobile),
+                      SizedBox(height: isMobile ? 40 : 60),
+                      _buildCTASection(isMobile),
+                      SizedBox(height: isMobile ? 30 : 50),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -174,7 +186,7 @@ class _ContactSectionState extends State<ContactSection>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isMobile) {
     return AnimatedRevealWidget(
       visible: _isVisible,
       delay: 0,
@@ -206,7 +218,7 @@ class _ContactSectionState extends State<ContactSection>
               child: Text(
                 'GET IN TOUCH',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: isMobile ? 10 : 12,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFFFAAB0C),
                   letterSpacing: 2,
@@ -215,57 +227,101 @@ class _ContactSectionState extends State<ContactSection>
             ),
           ),
           const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildAnimatedIcon(),
-              const SizedBox(width: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ShaderMask(
-                    shaderCallback: (bounds) {
-                      return LinearGradient(
-                        colors: [
-                          Colors.white,
-                          const Color(0xFFFAAB0C),
-                          Colors.white,
-                        ],
-                      ).createShader(bounds);
-                    },
-                    child: Text(
-                      'Contact Us',
-                      style: TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: -2,
+          if (!isMobile)
+            // DESKTOP VIEW - Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAnimatedIcon(isMobile),
+                const SizedBox(width: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) {
+                        return LinearGradient(
+                          colors: [
+                            Colors.white,
+                            const Color(0xFFFAAB0C),
+                            Colors.white,
+                          ],
+                        ).createShader(bounds);
+                      },
+                      child: Text(
+                        'Contact Us',
+                        style: TextStyle(
+                          fontSize: 52,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -2,
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    height: 5,
-                    width: 200,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [const Color(0xFFFAAB0C), Colors.transparent],
+                    Container(
+                      height: 5,
+                      width: 200,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [const Color(0xFFFAAB0C), Colors.transparent],
+                        ),
+                        borderRadius: BorderRadius.circular(3),
                       ),
-                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else
+            // MOBILE VIEW - Header
+            Column(
+              children: [
+                _buildAnimatedIcon(isMobile),
+                const SizedBox(height: 15),
+                ShaderMask(
+                  shaderCallback: (bounds) {
+                    return LinearGradient(
+                      colors: [
+                        Colors.white,
+                        const Color(0xFFFAAB0C),
+                        Colors.white,
+                      ],
+                    ).createShader(bounds);
+                  },
+                  child: Text(
+                    'Contact Us',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -2,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  height: 4,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [const Color(0xFFFAAB0C), Colors.transparent],
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 25),
-          Text(
-            'We\'re here to help bring your construction dreams to life',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.white60,
-              letterSpacing: 0.5,
-              fontWeight: FontWeight.w500,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 0),
+            child: Text(
+              'We\'re here to help bring your construction dreams to life',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: isMobile ? 14 : 18,
+                color: Colors.white60,
+                letterSpacing: 0.5,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -273,7 +329,7 @@ class _ContactSectionState extends State<ContactSection>
     );
   }
 
-  Widget _buildAnimatedIcon() {
+  Widget _buildAnimatedIcon(bool isMobile) {
     return AnimatedBuilder(
       animation: _rippleController,
       builder: (context, child) {
@@ -283,8 +339,8 @@ class _ContactSectionState extends State<ContactSection>
             // Ripple effect
             if (_rippleController.value < 0.7)
               Container(
-                width: 80 + (60 * _rippleController.value),
-                height: 80 + (60 * _rippleController.value),
+                width: (isMobile ? 60 : 80) + (60 * _rippleController.value),
+                height: (isMobile ? 60 : 80) + (60 * _rippleController.value),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -295,7 +351,7 @@ class _ContactSectionState extends State<ContactSection>
                   ),
                 ),
               ),
-            // Main icon
+            // Pulsing icon
             AnimatedBuilder(
               animation: _pulseController,
               builder: (context, child) {
@@ -303,7 +359,7 @@ class _ContactSectionState extends State<ContactSection>
                 return Transform.scale(
                   scale: scale,
                   child: Container(
-                    padding: const EdgeInsets.all(18),
+                    padding: EdgeInsets.all(isMobile ? 12 : 18),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -322,10 +378,10 @@ class _ContactSectionState extends State<ContactSection>
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.contact_phone,
                       color: Colors.black,
-                      size: 42,
+                      size: isMobile ? 28 : 42,
                     ),
                   ),
                 );
@@ -337,41 +393,77 @@ class _ContactSectionState extends State<ContactSection>
     );
   }
 
-  Widget _buildContactMethods() {
+  Widget _buildContactMethods(bool isMobile) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 900;
-
-        return Wrap(
-          spacing: 30,
-          runSpacing: 30,
-          alignment: WrapAlignment.center,
-          children: List.generate(
-            contactMethods.length,
-            (index) => AnimatedRevealWidget(
-              visible: _isVisible,
-              delay: 300 + (index * 150),
-              child: SizedBox(
-                height: isWide ? 280 : 250,
-                width: isWide ? 320 : 300,
-                child: _ContactMethodCard(
-                  method: contactMethods[index],
-                  index: index,
+        if (isMobile) {
+          // MOBILE VIEW - Horizontal scroll
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(
+                contactMethods.length,
+                (index) => Padding(
+                  padding: EdgeInsets.only(
+                    left: index == 0 ? 0 : 20,
+                    right: index == contactMethods.length - 1 ? 0 : 20,
+                  ),
+                  child: AnimatedRevealWidget(
+                    visible: _isVisible,
+                    delay: 300 + (index * 150),
+                    child: SizedBox(
+                      height: 240,
+                      width: 280,
+                      child: _ContactMethodCard(
+                        method: contactMethods[index],
+                        index: index,
+                        isMobile: isMobile,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
+          );
+        } else {
+          // DESKTOP VIEW - Grid layout
+          final isWide = constraints.maxWidth > 900;
+          final cardWidth = isWide ? 320.0 : 300.0;
+          final cardHeight = isWide ? 280.0 : 250.0;
+
+          return Wrap(
+            spacing: 30,
+            runSpacing: 30,
+            alignment: WrapAlignment.center,
+            children: List.generate(
+              contactMethods.length,
+              (index) => AnimatedRevealWidget(
+                visible: _isVisible,
+                delay: 300 + (index * 150),
+                child: SizedBox(
+                  height: cardHeight,
+                  width: cardWidth,
+                  child: _ContactMethodCard(
+                    method: contactMethods[index],
+                    index: index,
+                    isMobile: isMobile,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
       },
     );
   }
 
-  Widget _buildMapSection() {
+  Widget _buildMapSection(bool isMobile) {
     return AnimatedRevealWidget(
       visible: _isVisible,
       delay: 900,
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 900),
+        width: double.infinity,
+        constraints: BoxConstraints(maxWidth: isMobile ? 400 : 900),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -387,121 +479,121 @@ class _ContactSectionState extends State<ContactSection>
             width: 2,
           ),
         ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(30),
-              child: Column(
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 20 : 30),
+          child: Column(
+            children: [
+              // Map Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFFEF4444),
-                              const Color(0xFFF87171),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.map,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Text(
-                        'Find Us on Map',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Map Placeholder
                   Container(
-                    height: 300,
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.black26,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Stack(
-                        children: [
-                          // You can replace this with actual Google Maps widget
-                          Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 60,
-                                  color: const Color(0xFFFAAB0C),
-                                ),
-                                const SizedBox(height: 15),
-                                Text(
-                                  'Wardha, Maharashtra',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    _launchURL(
-                                      'https://maps.google.com/?q=Wardha,Maharashtra',
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.directions,
-                                    color: Colors.black,
-                                  ),
-                                  label: const Text(
-                                    'Open in Google Maps',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFAAB0C),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFEF4444),
+                          const Color(0xFFF87171),
                         ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.map,
+                      color: Colors.white,
+                      size: isMobile ? 20 : 24,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Text(
+                      'Find Us on Map',
+                      style: TextStyle(
+                        fontSize: isMobile ? 20 : 28,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+
+              // Map Container
+              Container(
+                height: isMobile ? 250 : 300,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: isMobile ? 45 : 60,
+                          color: const Color(0xFFFAAB0C),
+                        ),
+                        const SizedBox(height: 15),
+                        Text(
+                          'Nagpur, Maharashtra 441501',
+                          style: TextStyle(
+                            fontSize: isMobile ? 13 : 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            height: 1.6,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            _launchURL(
+                              'https://maps.google.com/?q=Nagpur+Properties+301+Sai+Shraddha+Utkarsh+Society+Dabha+Rd+Vayusena+Nagar+Nagpur+Maharashtra+441501',
+                            );
+                          },
+                          icon: Icon(
+                            Icons.directions,
+                            color: Colors.black,
+                            size: isMobile ? 18 : 20,
+                          ),
+                          label: Text(
+                            'Open in Google Maps',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                              fontSize: isMobile ? 12 : 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFAAB0C),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isMobile ? 16 : 24,
+                              vertical: isMobile ? 12 : 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildCTASection() {
+  Widget _buildCTASection(bool isMobile) {
     return AnimatedRevealWidget(
       visible: _isVisible,
       delay: 1200,
@@ -509,7 +601,8 @@ class _ContactSectionState extends State<ContactSection>
         animation: _pulseController,
         builder: (context, child) {
           return Container(
-            padding: const EdgeInsets.all(50),
+            width: double.infinity,
+            padding: EdgeInsets.all(isMobile ? 30 : 50),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [const Color(0xFFFAAB0C), Colors.yellow.shade700],
@@ -531,7 +624,7 @@ class _ContactSectionState extends State<ContactSection>
                   'Ready to Start Your Project?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: isMobile ? 24 : 32,
                     fontWeight: FontWeight.w900,
                     color: Colors.black,
                     letterSpacing: -1,
@@ -542,69 +635,131 @@ class _ContactSectionState extends State<ContactSection>
                   'Our team is available 24/7 to answer your queries',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isMobile ? 13 : 16,
                     color: Colors.black87,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 30),
-                Wrap(
-                  spacing: 20,
-                  runSpacing: 20,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _launchURL('tel:+918698230709');
-                      },
-                      icon: const Icon(Icons.phone, color: Colors.white),
-                      label: const Text(
-                        'Call Now',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+
+                // CTA Buttons
+                if (isMobile)
+                  // MOBILE VIEW - Stacked buttons
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _launchURL('tel:+919823388866');
+                          },
+                          icon: const Icon(Icons.phone, color: Colors.white),
+                          label: const Text(
+                            'Call Now',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            elevation: 8,
+                          ),
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 18,
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _launchURL('https://wa.me/917888028866');
+                          },
+                          icon: const Icon(Icons.chat, color: Colors.white),
+                          label: const Text(
+                            'WhatsApp Us',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            elevation: 8,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        elevation: 8,
                       ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _launchURL('https://wa.me/918698230709');
-                      },
-                      icon: const Icon(Icons.chat, color: Colors.white),
-                      label: const Text(
-                        'WhatsApp Us',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                    ],
+                  )
+                else
+                  // DESKTOP VIEW - Side by side buttons
+                  Wrap(
+                    spacing: 20,
+                    runSpacing: 20,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _launchURL('tel:+919823388866');
+                        },
+                        icon: const Icon(Icons.phone, color: Colors.white),
+                        label: const Text(
+                          'Call Now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 18,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          elevation: 8,
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 18,
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _launchURL('https://wa.me/917888028866');
+                        },
+                        icon: const Icon(Icons.chat, color: Colors.white),
+                        label: const Text(
+                          'WhatsApp Us',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 18,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          elevation: 8,
                         ),
-                        elevation: 8,
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           );
@@ -625,8 +780,13 @@ class _ContactSectionState extends State<ContactSection>
 class _ContactMethodCard extends StatefulWidget {
   final ContactMethod method;
   final int index;
+  final bool isMobile;
 
-  const _ContactMethodCard({required this.method, required this.index});
+  const _ContactMethodCard({
+    required this.method,
+    required this.index,
+    required this.isMobile,
+  });
 
   @override
   State<_ContactMethodCard> createState() => _ContactMethodCardState();
@@ -663,31 +823,38 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) {
-        setState(() => _isHovered = true);
-        _hoverController.forward();
-      },
-      onExit: (_) {
-        setState(() => _isHovered = false);
-        _hoverController.reverse();
-      },
+      onEnter: widget.isMobile
+          ? null
+          : (_) {
+              setState(() => _isHovered = true);
+              _hoverController.forward();
+            },
+      onExit: widget.isMobile
+          ? null
+          : (_) {
+              setState(() => _isHovered = false);
+              _hoverController.reverse();
+            },
       child: GestureDetector(
         onTap: () => _launchURL(widget.method.link),
         child: AnimatedBuilder(
           animation: _hoverController,
           builder: (context, child) {
-            final scale = 1.0 + (0.05 * _hoverController.value);
-            final elevation = 5.0 + (20.0 * _hoverController.value);
+            final scale = widget.isMobile
+                ? 1.0
+                : (1.0 + (0.05 * _hoverController.value));
+            final elevation = widget.isMobile
+                ? 5.0
+                : (5.0 + (20.0 * _hoverController.value));
 
             return Transform.scale(
               scale: scale,
               child: Container(
-                height: 220,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: _isHovered
+                    colors: (_isHovered && !widget.isMobile)
                         ? [
                             widget.method.gradient[0].withOpacity(0.2),
                             widget.method.gradient[1].withOpacity(0.05),
@@ -699,14 +866,14 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                   ),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: _isHovered
+                    color: (_isHovered && !widget.isMobile)
                         ? widget.method.accentColor.withOpacity(0.6)
                         : Colors.white.withOpacity(0.1),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: _isHovered
+                      color: (_isHovered && !widget.isMobile)
                           ? widget.method.accentColor.withOpacity(0.4)
                           : Colors.black.withOpacity(0.3),
                       blurRadius: elevation,
@@ -719,6 +886,7 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Icon Container
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -729,8 +897,12 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                           boxShadow: [
                             BoxShadow(
                               color: widget.method.accentColor.withOpacity(0.5),
-                              blurRadius: _isHovered ? 25 : 15,
-                              spreadRadius: _isHovered ? 3 : 0,
+                              blurRadius: (_isHovered && !widget.isMobile)
+                                  ? 25
+                                  : 15,
+                              spreadRadius: (_isHovered && !widget.isMobile)
+                                  ? 3
+                                  : 0,
                             ),
                           ],
                         ),
@@ -741,9 +913,11 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      // Title
                       Text(
                         widget.method.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Colors.white70,
@@ -751,9 +925,11 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                         ),
                       ),
                       const SizedBox(height: 8),
+
+                      // Value
                       Text(
                         widget.method.value,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
@@ -761,6 +937,8 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                         ),
                       ),
                       const Spacer(),
+
+                      // Action Button
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         padding: const EdgeInsets.symmetric(
@@ -768,7 +946,7 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: _isHovered
+                          color: (_isHovered && !widget.isMobile)
                               ? widget.method.accentColor
                               : widget.method.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(20),
@@ -785,7 +963,7 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: _isHovered
+                                color: (_isHovered && !widget.isMobile)
                                     ? Colors.white
                                     : Colors.white70,
                               ),
@@ -793,7 +971,9 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
                             const SizedBox(width: 6),
                             Icon(
                               Icons.arrow_forward,
-                              color: _isHovered ? Colors.white : Colors.white70,
+                              color: (_isHovered && !widget.isMobile)
+                                  ? Colors.white
+                                  : Colors.white70,
                               size: 16,
                             ),
                           ],
@@ -811,7 +991,7 @@ class _ContactMethodCardState extends State<_ContactMethodCard>
   }
 }
 
-// Animated Reveal Widget (same as before)
+// Animated Reveal Widget
 class AnimatedRevealWidget extends StatelessWidget {
   final Widget child;
   final bool visible;
@@ -853,7 +1033,7 @@ class ContactBackgroundPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    // Animated grid
+    // Animated grid lines
     for (int i = 0; i < 10; i++) {
       final offset = (animationValue * 100) % 100;
       final y = (size.height / 10) * i + offset;

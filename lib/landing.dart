@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:lottie/lottie.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:ss/MachinerySection.dart';
 import 'package:ss/about.dart';
 import 'package:ss/contact.dart';
@@ -9,7 +10,6 @@ import 'package:ss/new.dart';
 import 'package:ss/new2.dart';
 import 'package:ss/servies.dart';
 import 'package:ss/sho.dart';
-// Add this import
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -22,12 +22,11 @@ class _LandingScreenState extends State<LandingScreen>
     with TickerProviderStateMixin {
   late final ScrollController _scrollController;
   late final AnimationController _heroController;
-  late final AnimationController _introController;
 
   // Section Keys for Navigation
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
-  final GlobalKey _roadRollerKey = GlobalKey(); // Add this key
+  final GlobalKey _roadRollerKey = GlobalKey();
   final GlobalKey _projectsKey = GlobalKey();
   final GlobalKey _howWeWorkKey = GlobalKey();
   final GlobalKey _machineryKey = GlobalKey();
@@ -38,33 +37,30 @@ class _LandingScreenState extends State<LandingScreen>
   final GlobalKey _featuresKey = GlobalKey();
   final GlobalKey _contactKey = GlobalKey();
 
-  // Section Visibility States
-  Map<String, bool> _sectionVisibility = {
-    'hero': true,
-    'about': false,
-    'roadRoller': false, // Add this
-    'projects': false,
-    'howWeWork': false,
-    'machinery': false,
-    'quality': false,
-    'team': false,
-    'media': false,
-    'whyChoose': false,
-    'features': false,
-    'contact': false,
-  };
-
-  bool _modelsPreloaded = false;
+  final Map<int, bool> _sectionVisibility = {};
   bool _showNavBar = false;
+  bool _showPopup = false;
   int _activeSection = 0;
 
-  final List<NavigationItem> _navItems = [
+  static const List<double> _sectionOffsets = [
+    400,
+    1100,
+    1900,
+    2700,
+    3500,
+    4300,
+    5100,
+    5900,
+    6700,
+    7500,
+    8300,
+    9100,
+  ];
+
+  final List<NavigationItem> _navItems = const [
     NavigationItem(icon: Icons.home, label: 'Home'),
     NavigationItem(icon: Icons.info_outline, label: 'About'),
-    NavigationItem(
-      icon: Icons.construction_outlined,
-      label: 'Road Roller',
-    ), // Add this
+    NavigationItem(icon: Icons.construction_outlined, label: 'Road Roller'),
     NavigationItem(icon: Icons.work_outline, label: 'Projects'),
     NavigationItem(icon: Icons.construction, label: 'How We Work'),
     NavigationItem(icon: Icons.precision_manufacturing, label: 'Machinery'),
@@ -76,29 +72,51 @@ class _LandingScreenState extends State<LandingScreen>
     NavigationItem(icon: Icons.contact_mail, label: 'Contact'),
   ];
 
+  late final List<GlobalKey> _sectionKeys;
+
   @override
   void initState() {
     super.initState();
+
+    _sectionKeys = [
+      _heroKey,
+      _aboutKey,
+      _roadRollerKey,
+      _projectsKey,
+      _howWeWorkKey,
+      _machineryKey,
+      _qualityKey,
+      _teamKey,
+      _mediaKey,
+      _whyChooseKey,
+      _featuresKey,
+      _contactKey,
+    ];
+
+    for (int i = 0; i < 12; i++) {
+      _sectionVisibility[i] = i == 0;
+    }
 
     _scrollController = ScrollController()..addListener(_onScroll);
     _heroController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 14),
     )..repeat();
-    _introController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..forward();
 
-    // Preload models
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) setState(() => _modelsPreloaded = true);
-    });
+    _preloadAssets();
 
-    // Show navbar after initial animation
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) setState(() => _showNavBar = true);
     });
+
+    // Show popup after 10 seconds
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted) setState(() => _showPopup = true);
+    });
+  }
+
+  void _preloadAssets() {
+    AssetLottie('images/landing.json').load();
   }
 
   @override
@@ -106,231 +124,159 @@ class _LandingScreenState extends State<LandingScreen>
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _heroController.dispose();
-    _introController.dispose();
     super.dispose();
   }
 
   void _onScroll() {
     final offset = _scrollController.offset;
+    bool needsUpdate = false;
 
-    // Update section visibility for lazy loading
-    setState(() {
-      _sectionVisibility['about'] = offset > 200;
-      _sectionVisibility['roadRoller'] = offset > 800; // Add this
-      _sectionVisibility['projects'] = offset > 1500; // Updated
-      _sectionVisibility['howWeWork'] = offset > 2300; // Updated
-      _sectionVisibility['machinery'] = offset > 3100; // Updated
-      _sectionVisibility['quality'] = offset > 3900; // Updated
-      _sectionVisibility['team'] = offset > 4700; // Updated
-      _sectionVisibility['media'] = offset > 5500; // Updated
-      _sectionVisibility['whyChoose'] = offset > 6300; // Updated
-      _sectionVisibility['features'] = offset > 7100; // Updated
-      _sectionVisibility['contact'] = offset > 7900; // Updated
-
-      // Update active section for navigation
-      if (offset < 400) {
-        _activeSection = 0;
-      } else if (offset < 1100) {
-        _activeSection = 1;
-      } else if (offset < 1900) {
-        _activeSection = 2; // Road Roller
-      } else if (offset < 2700) {
-        _activeSection = 3; // Projects
-      } else if (offset < 3500) {
-        _activeSection = 4; // How We Work
-      } else if (offset < 4300) {
-        _activeSection = 5; // Machinery
-      } else if (offset < 5100) {
-        _activeSection = 6; // Quality
-      } else if (offset < 5900) {
-        _activeSection = 7; // Team
-      } else if (offset < 6700) {
-        _activeSection = 8; // Media
-      } else if (offset < 7500) {
-        _activeSection = 9; // Why Choose
-      } else if (offset < 8300) {
-        _activeSection = 10; // Features
-      } else {
-        _activeSection = 11; // Contact
+    int newActiveSection = 0;
+    for (int i = _sectionOffsets.length - 1; i >= 0; i--) {
+      if (offset >= _sectionOffsets[i]) {
+        newActiveSection = i + 1;
+        break;
       }
-    });
+    }
+
+    if (_activeSection != newActiveSection) {
+      _activeSection = newActiveSection;
+      needsUpdate = true;
+    }
+
+    final visibilityThresholds = [
+      200,
+      800,
+      1500,
+      2300,
+      3100,
+      3900,
+      4700,
+      5500,
+      6300,
+      7100,
+      7900,
+      8700,
+    ];
+
+    for (int i = 1; i < visibilityThresholds.length; i++) {
+      final shouldBeVisible = offset > visibilityThresholds[i];
+      if (_sectionVisibility[i] != shouldBeVisible) {
+        _sectionVisibility[i] = shouldBeVisible;
+        needsUpdate = true;
+      }
+    }
+
+    if (needsUpdate) setState(() {});
   }
 
-  void _scrollToSection(GlobalKey key, int index) {
-    setState(() => _activeSection = index);
-
+  void _scrollToSection(int index) {
+    final key = _sectionKeys[index];
     final context = key.currentContext;
+
     if (context != null) {
-      Scrollable.ensureVisible(
-        context,
+      // Calculate the position
+      final RenderBox renderBox = context.findRenderObject() as RenderBox;
+      final position = renderBox.localToGlobal(Offset.zero).dy;
+      final currentScroll = _scrollController.offset;
+      final targetScroll =
+          currentScroll + position - 100; // 100px offset for navbar
+
+      _scrollController.animateTo(
+        targetScroll.clamp(0.0, _scrollController.position.maxScrollExtent),
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOutCubic,
       );
+
+      setState(() => _activeSection = index);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isNarrow = width < 900;
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
+    final isTablet = size.width >= 600 && size.width < 900;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Animated Background
-          Positioned.fill(
-            child: AnimatedBackground(controller: _heroController),
-          ),
+          const ColoredBox(color: Colors.black),
 
-          // Main Content
           SingleChildScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // 1. Hero Section
                 SectionWrapper(
                   key: _heroKey,
-                  child: _buildHeroSection(isNarrow),
+                  child: _buildLottieHeroSection(isMobile, isTablet),
                 ),
-
-                // 2. About Section
-                SectionWrapper(
-                  key: _aboutKey,
-                  child: _sectionVisibility['about']!
-                      ? AnimatedReveal(visible: true, child: AboutSection())
-                      : const SectionPlaceholder(height: 600),
+                _buildLazySection(_aboutKey, 1, const AboutSection(), 600),
+                _buildLazySection(
+                  _roadRollerKey,
+                  2,
+                  const RoadRollerPage(),
+                  700,
                 ),
-
-                // 3. Road Roller Section
-                SectionWrapper(
-                  key: _roadRollerKey,
-                  child: _sectionVisibility['roadRoller']!
-                      ? AnimatedReveal(visible: true, child: RoadRollerPage())
-                      : const SectionPlaceholder(height: 700),
+                _buildLazySection(
+                  _projectsKey,
+                  3,
+                  const ProjectsSection(),
+                  800,
                 ),
-
-                // 4. Projects Section
-                SectionWrapper(
-                  key: _projectsKey,
-                  child: _sectionVisibility['projects']!
-                      ? AnimatedReveal(visible: true, child: ProjectsSection())
-                      : const SectionPlaceholder(height: 800),
+                _buildLazySection(
+                  _howWeWorkKey,
+                  4,
+                  const HowWeWorkSection(),
+                  900,
+                  const Color(0xFF060606),
                 ),
-
-                // 5. How We Work Section
-                SectionWrapper(
-                  key: _howWeWorkKey,
-                  color: const Color(0xFF060606),
-                  child: _sectionVisibility['howWeWork']!
-                      ? AnimatedReveal(visible: true, child: HowWeWorkSection())
-                      : const SectionPlaceholder(height: 900),
+                _buildLazySection(
+                  _machineryKey,
+                  5,
+                  const MachinerySection(),
+                  700,
                 ),
-
-                // 6. Machinery Section
-                SectionWrapper(
-                  key: _machineryKey,
-                  child: _sectionVisibility['machinery']!
-                      ? AnimatedReveal(visible: true, child: MachinerySection())
-                      : const SectionPlaceholder(height: 700),
+                _buildLazySection(
+                  _qualityKey,
+                  6,
+                  const QualityStandardsSection(),
+                  600,
                 ),
-
-                // 7. Quality Standards Section
-                SectionWrapper(
-                  key: _qualityKey,
-                  child: _sectionVisibility['quality']!
-                      ? AnimatedReveal(
-                          visible: true,
-                          child: QualityStandardsSection(),
-                        )
-                      : const SectionPlaceholder(height: 600),
+                _buildLazySection(
+                  _teamKey,
+                  7,
+                  const TeamStrengthSection(),
+                  600,
                 ),
-
-                // 8. Team Strength Section
-                SectionWrapper(
-                  key: _teamKey,
-                  child: _sectionVisibility['team']!
-                      ? AnimatedReveal(
-                          visible: true,
-                          child: TeamStrengthSection(),
-                        )
-                      : const SectionPlaceholder(height: 600),
+                _buildLazySection(
+                  _mediaKey,
+                  8,
+                  const MediaGallerySection(),
+                  800,
                 ),
-
-                // 9. Media Gallery Section
-                SectionWrapper(
-                  key: _mediaKey,
-                  child: _sectionVisibility['media']!
-                      ? AnimatedReveal(
-                          visible: true,
-                          child: MediaGallerySection(),
-                        )
-                      : const SectionPlaceholder(height: 800),
+                _buildLazySection(
+                  _whyChooseKey,
+                  9,
+                  const WhyChooseSSSection(),
+                  700,
                 ),
-
-                // 10. Why Choose Us Section
-                SectionWrapper(
-                  key: _whyChooseKey,
-                  child: _sectionVisibility['whyChoose']!
-                      ? AnimatedReveal(
-                          visible: true,
-                          child: WhyChooseSSSection(),
-                        )
-                      : const SectionPlaceholder(height: 700),
+                _buildLazySection(
+                  _featuresKey,
+                  10,
+                  const InteractiveFeaturesSection(),
+                  600,
                 ),
-
-                // 11. Interactive Features Section
-                SectionWrapper(
-                  key: _featuresKey,
-                  child: _sectionVisibility['features']!
-                      ? AnimatedReveal(
-                          visible: true,
-                          child: InteractiveFeaturesSection(),
-                        )
-                      : const SectionPlaceholder(height: 600),
+                _buildLazySection(
+                  _contactKey,
+                  11,
+                  const ContactSection(),
+                  700,
+                  const Color(0xFF060606),
                 ),
-
-                // 12. Contact Section
-                SectionWrapper(
-                  key: _contactKey,
-                  color: const Color(0xFF060606),
-                  child: _sectionVisibility['contact']!
-                      ? AnimatedReveal(visible: true, child: ContactSection())
-                      : const SectionPlaceholder(height: 700),
-                ),
-
-                // Footer
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFF0F0F0F), Color(0xFF000000)],
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        '© ${DateTime.now().year} SS Construction — All rights reserved',
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Building Tomorrow, Today',
-                        style: TextStyle(
-                          color: Color(0xFFFBBF24),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildFooter(),
               ],
             ),
           ),
@@ -345,52 +291,81 @@ class _LandingScreenState extends State<LandingScreen>
             child: FloatingNavigationBar(
               items: _navItems,
               activeIndex: _activeSection,
-              onTap: (index) {
-                final keys = [
-                  _heroKey,
-                  _aboutKey,
-                  _roadRollerKey, // Add this
-                  _projectsKey,
-                  _howWeWorkKey,
-                  _machineryKey,
-                  _qualityKey,
-                  _teamKey,
-                  _mediaKey,
-                  _whyChooseKey,
-                  _featuresKey,
-                  _contactKey,
-                ];
-                _scrollToSection(keys[index], index);
-              },
+              onTap: _scrollToSection,
             ),
           ),
 
           // Scroll Progress Indicator
+          if (!isMobile)
+            Positioned(
+              right: 20,
+              top: 120,
+              bottom: 100,
+              child: ScrollProgressIndicator(
+                controller: _scrollController,
+                activeSection: _activeSection,
+                totalSections: 12,
+                onTap: _scrollToSection,
+              ),
+            ),
+
+          // Sticky WhatsApp Button
           Positioned(
             right: 20,
-            top: 120,
-            bottom: 100,
-            child: ScrollProgressIndicator(
-              controller: _scrollController,
-              activeSection: _activeSection,
-              totalSections: 12, // Updated from 11 to 12
-              onTap: (index) {
-                final keys = [
-                  _heroKey,
-                  _aboutKey,
-                  _roadRollerKey, // Add this
-                  _projectsKey,
-                  _howWeWorkKey,
-                  _machineryKey,
-                  _qualityKey,
-                  _teamKey,
-                  _mediaKey,
-                  _whyChooseKey,
-                  _featuresKey,
-                  _contactKey,
-                ];
-                _scrollToSection(keys[index], index);
-              },
+            bottom: 20,
+            child: WhatsAppFloatingButton(phoneNumber: '+919823388866'),
+          ),
+
+          // Modern Popup Form
+          if (_showPopup)
+            ModernPopupForm(
+              onClose: () => setState(() => _showPopup = false),
+              phoneNumber: '+919823388866',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLazySection(
+    GlobalKey key,
+    int index,
+    Widget child,
+    double height, [
+    Color? color,
+  ]) {
+    return SectionWrapper(
+      key: key,
+      color: color,
+      child: _sectionVisibility[index] == true
+          ? RepaintBoundary(child: AnimatedReveal(visible: true, child: child))
+          : SectionPlaceholder(height: height),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0F0F0F), Color(0xFF000000)],
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            '© ${DateTime.now().year} SS Construction — All rights reserved',
+            style: const TextStyle(color: Colors.white54, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Building Tomorrow, Today',
+            style: TextStyle(
+              color: Color(0xFFFBBF24),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -398,114 +373,853 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildHeroSection(bool isNarrow) {
-    return SizedBox(
-      height: isNarrow ? 420 : 520,
-      child: Stack(
-        children: [
-          Positioned.fill(child: HeroSpotlight(controller: _heroController)),
-          Positioned.fill(child: ParticleSweep(controller: _heroController)),
-          Align(
-            alignment: Alignment.center,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isNarrow ? 20 : 36,
-                  vertical: isNarrow ? 18 : 30,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: AnimatedBuilder(
-                        animation: Listenable.merge([
-                          _introController,
-                          _heroController,
-                        ]),
-                        builder: (context, child) {
-                          final fade = Curves.easeOut.transform(
-                            (_introController.value * 1.2).clamp(0.0, 1.0),
-                          );
-                          final slide = Curves.easeOutCubic.transform(
-                            (_introController.value * 1.5).clamp(0.0, 1.0),
-                          );
-                          final floatVal = _heroController.value * 2 * pi;
-                          final subtleFloat = 3 * sin(floatVal * 0.5);
+  Widget _buildLottieHeroSection(bool isMobile, bool isTablet) {
+    final height = isMobile ? 600.0 : (isTablet ? 650.0 : 750.0);
 
-                          return Opacity(
-                            opacity: fade,
-                            child: Transform.translate(
-                              offset: Offset(-50 * (1 - slide), subtleFloat),
-                              child: Transform.scale(
-                                scale: 1.0 + 0.02 * sin(floatVal * 0.8),
-                                child: HeroTextBlock(
-                                  introController: _introController,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+    return RepaintBoundary(
+      child: SizedBox(
+        height: height,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Lottie.asset(
+                'images/landing.json',
+                fit: BoxFit.cover,
+                animate: true,
+                repeat: true,
+                frameRate: FrameRate(60),
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.7),
+                      Colors.black.withOpacity(0.4),
+                      Colors.black.withOpacity(0.8),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 24 : (isTablet ? 40 : 60),
+                        vertical: isMobile ? 40 : 60,
                       ),
+                      child: _buildAnimatedHeroContent(isMobile, isTablet),
                     ),
-                    Expanded(
-                      flex: isNarrow ? 6 : 8,
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: _buildInstant3DModel(
-                          src: 'assets/images/jcb_backhoe_loader.glb',
-                          height: isNarrow ? 400 : 520,
-                        ),
-                      ),
+                  ),
+                ),
+              ),
+            ),
+            if (!isMobile) ..._buildParticles(height, 8),
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: _buildScrollIndicator(isMobile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildParticles(double height, int count) {
+    return List.generate(
+      count,
+      (index) => RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _heroController,
+          builder: (context, child) {
+            final offset = (_heroController.value + index * 0.2) % 1.0;
+            final xPos = 0.1 + (index % 5) * 0.18;
+            final yPos = offset;
+            final size = 1.5 + (index % 2) * 1.0;
+
+            return Positioned(
+              left: MediaQuery.of(context).size.width * xPos,
+              top: height * yPos,
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFBBF24).withOpacity(0.25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFBBF24).withOpacity(0.3),
+                      blurRadius: 4,
+                      spreadRadius: 1,
                     ),
                   ],
                 ),
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildInstant3DModel({required String src, double height = 500}) {
-    if (!_modelsPreloaded) {
-      return SizedBox(
-        height: 300,
-        child: Center(
-          child: CircularProgressIndicator(
-            color: Colors.amber,
-            strokeWidth: 2.5,
+  Widget _buildAnimatedHeroContent(bool isMobile, bool isTablet) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 16 : 24,
+            vertical: isMobile ? 8 : 12,
+          ),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFBBF24).withOpacity(0.4),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
+              SizedBox(width: isMobile ? 8 : 12),
+              Text(
+                'Building Excellence Since 2000',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isMobile ? 11 : (isTablet ? 13 : 15),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
         ),
-      );
-    }
+        SizedBox(height: isMobile ? 30 : 40),
+        ShaderMask(
+          shaderCallback: (bounds) {
+            return const LinearGradient(
+              colors: [Color(0xFFFFFFFF), Color(0xFFFBBF24), Color(0xFFFFFFFF)],
+            ).createShader(bounds);
+          },
+          child: Text(
+            'SS Construction',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 40 : (isTablet ? 60 : 80),
+              fontWeight: FontWeight.w900,
+              height: 1.1,
+              color: Colors.white,
+              letterSpacing: 1.5,
+              shadows: [
+                Shadow(
+                  color: const Color(0xFFFBBF24).withOpacity(0.6),
+                  blurRadius: 30,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: isMobile ? 20 : 28),
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 20 : 28,
+            vertical: isMobile ? 10 : 14,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: const Color(0xFFFBBF24).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            'Transforming Visions into Reality',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 18 : (isTablet ? 24 : 28),
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFFFBBF24),
+              letterSpacing: 1.2,
+              height: 1.3,
+            ),
+          ),
+        ),
+        SizedBox(height: isMobile ? 24 : 32),
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : (isTablet ? 600 : 700),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+          child: Text(
+            'Leading construction company delivering innovative infrastructure solutions with precision, quality, and excellence.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 14 : (isTablet ? 16 : 18),
+              color: Colors.white.withOpacity(0.9),
+              height: 1.6,
+              letterSpacing: 0.3,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+        SizedBox(height: isMobile ? 35 : 50),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: isMobile ? 12 : 20,
+          runSpacing: isMobile ? 12 : 20,
+          children: [
+            _buildCTAButton(
+              label: 'Explore Projects',
+              icon: Icons.arrow_forward_rounded,
+              isPrimary: true,
+              isMobile: isMobile,
+              onTap: () => _scrollToSection(3),
+            ),
+            _buildCTAButton(
+              label: 'Contact Us',
+              icon: Icons.phone_outlined,
+              isPrimary: false,
+              isMobile: isMobile,
+              onTap: () => _scrollToSection(11),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-    return SizedBox(
-      height: height,
-      child: ModelViewer(
-        src: src,
-        alt: "3D Construction Model",
-        ar: true,
-        autoRotate: true,
-        cameraControls: true,
-        disableZoom: false,
-        backgroundColor: Colors.transparent,
-        cameraOrbit: "45deg 90deg 50%",
-        fieldOfView: "30deg",
-        loading: Loading.lazy,
+  Widget _buildCTAButton({
+    required String label,
+    required IconData icon,
+    required bool isPrimary,
+    required bool isMobile,
+    required VoidCallback onTap,
+  }) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: isPrimary
+              ? const LinearGradient(
+                  colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                )
+              : null,
+          borderRadius: BorderRadius.circular(35),
+          border: isPrimary
+              ? null
+              : Border.all(color: const Color(0xFFFBBF24), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: (isPrimary ? const Color(0xFFFBBF24) : Colors.transparent)
+                  .withOpacity(0.4),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(35),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 24 : 32,
+                vertical: isMobile ? 14 : 18,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 14 : 17,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Icon(icon, color: Colors.white, size: isMobile ? 18 : 22),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollIndicator(bool isMobile) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _heroController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 8 * sin(_heroController.value * 2 * pi)),
+            child: Column(
+              children: [
+                Text(
+                  'Scroll to Explore',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: isMobile ? 11 : 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: const Color(0xFFFBBF24),
+                  size: isMobile ? 28 : 36,
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-// ===================== NAVIGATION COMPONENTS =====================
+// =====================================================
+// WHATSAPP FLOATING BUTTON
+// =====================================================
+class WhatsAppFloatingButton extends StatefulWidget {
+  final String phoneNumber;
 
+  const WhatsAppFloatingButton({super.key, required this.phoneNumber});
+
+  @override
+  State<WhatsAppFloatingButton> createState() => _WhatsAppFloatingButtonState();
+}
+
+class _WhatsAppFloatingButtonState extends State<WhatsAppFloatingButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _launchWhatsApp() async {
+    final url = Uri.parse(
+      'https://wa.me/${widget.phoneNumber.replaceAll('+', '')}',
+    );
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF25D366).withOpacity(0.5),
+              blurRadius: 20,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: Material(
+          color: const Color(0xFF25D366),
+          shape: const CircleBorder(),
+          child: InkWell(
+            onTap: _launchWhatsApp,
+            customBorder: const CircleBorder(),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              child: const Icon(Icons.chat, color: Colors.white, size: 32),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =====================================================
+// MODERN POPUP FORM
+// =====================================================
+class ModernPopupForm extends StatefulWidget {
+  final VoidCallback onClose;
+  final String phoneNumber;
+
+  const ModernPopupForm({
+    super.key,
+    required this.onClose,
+    required this.phoneNumber,
+  });
+
+  @override
+  State<ModernPopupForm> createState() => _ModernPopupFormState();
+}
+
+class _ModernPopupFormState extends State<ModernPopupForm>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _mobileController = TextEditingController();
+  final _emailController = TextEditingController();
+  String _selectedService = 'Service 1';
+
+  final List<String> _services = ['Service 1', 'Service 2', 'Service 3'];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    );
+
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _nameController.dispose();
+    _mobileController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      final message =
+          '''Hello SS Construction!
+
+Name: ${_nameController.text}
+Mobile: ${_mobileController.text}
+Email: ${_emailController.text.isEmpty ? 'Not provided' : _emailController.text}
+Service: $_selectedService
+
+I'm interested in your services.''';
+
+      final url = Uri.parse(
+        'https://wa.me/${widget.phoneNumber.replaceAll('+', '')}?text=${Uri.encodeComponent(message)}',
+      );
+
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+        _closePopup();
+      }
+    }
+  }
+
+  void _closePopup() async {
+    await _controller.reverse();
+    widget.onClose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        color: Colors.black.withOpacity(0.7),
+        child: Center(
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              margin: EdgeInsets.symmetric(
+                horizontal: isMobile ? 20 : 40,
+                vertical: isMobile ? 40 : 60,
+              ),
+              constraints: BoxConstraints(
+                maxWidth: isMobile ? double.infinity : 500,
+                maxHeight: size.height * 0.9,
+              ),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1A1A1A), Color(0xFF0F0F0F)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0xFFFBBF24).withOpacity(0.3),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFBBF24).withOpacity(0.2),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 24 : 32),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFFFBBF24),
+                                          Color(0xFFF59E0B),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '🎉 Special Offer',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isMobile ? 11 : 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Get a Free Quote!',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isMobile ? 22 : 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Connect with us on WhatsApp',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: isMobile ? 13 : 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _closePopup,
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white70,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 28),
+                        _buildTextField(
+                          controller: _nameController,
+                          label: 'Full Name',
+                          hint: 'Enter your name',
+                          icon: Icons.person_outline,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your name';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _mobileController,
+                          label: 'Mobile Number',
+                          hint: '+91 XXXXX XXXXX',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your mobile number';
+                            }
+                            if (value.length < 10) {
+                              return 'Please enter a valid mobile number';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _emailController,
+                          label: 'Email (Optional)',
+                          hint: 'your@email.com',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdown(),
+                        const SizedBox(height: 28),
+                        _buildSubmitButton(isMobile),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 14,
+                              color: Colors.white54,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Your information is secure',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFFBBF24),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          validator: validator,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.white38),
+            prefixIcon: Icon(icon, color: const Color(0xFFFBBF24)),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.05),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFFBBF24), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select Service',
+          style: TextStyle(
+            color: Color(0xFFFBBF24),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedService,
+            dropdownColor: const Color(0xFF1A1A1A),
+            style: const TextStyle(color: Colors.white),
+            icon: const Icon(
+              Icons.keyboard_arrow_down,
+              color: Color(0xFFFBBF24),
+            ),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(
+                Icons.build_outlined,
+                color: Color(0xFFFBBF24),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            items: _services.map((String service) {
+              return DropdownMenuItem<String>(
+                value: service,
+                child: Text(service),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedService = newValue!;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFBBF24).withOpacity(0.5),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _submitForm,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 18),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  'submit',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =====================================================
+// NAVIGATION COMPONENTS (UNCHANGED)
+// =====================================================
 class NavigationItem {
   final IconData icon;
   final String label;
 
-  NavigationItem({required this.icon, required this.label});
+  const NavigationItem({required this.icon, required this.label});
 }
 
 class FloatingNavigationBar extends StatefulWidget {
@@ -700,6 +1414,9 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
   }
 }
 
+// =====================================================
+// SCROLL PROGRESS INDICATOR (UNCHANGED)
+// =====================================================
 class ScrollProgressIndicator extends StatelessWidget {
   final ScrollController controller;
   final int activeSection;
@@ -736,27 +1453,32 @@ class ScrollProgressIndicator extends StatelessWidget {
           totalSections,
           (index) => GestureDetector(
             onTap: () => onTap(index),
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 6),
-              width: 8,
-              height: activeSection == index ? 32 : 8,
-              decoration: BoxDecoration(
-                gradient: activeSection == index
-                    ? const LinearGradient(
-                        colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
-                      )
-                    : null,
-                color: activeSection == index ? null : const Color(0xFF4B5563),
-                borderRadius: BorderRadius.circular(4),
-                boxShadow: activeSection == index
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFFFBBF24).withOpacity(0.5),
-                          blurRadius: 8,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                width: 8,
+                height: activeSection == index ? 32 : 8,
+                decoration: BoxDecoration(
+                  gradient: activeSection == index
+                      ? const LinearGradient(
+                          colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                        )
+                      : null,
+                  color: activeSection == index
+                      ? null
+                      : const Color(0xFF4B5563),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: activeSection == index
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFFBBF24).withOpacity(0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
               ),
             ),
           ),
@@ -766,8 +1488,9 @@ class ScrollProgressIndicator extends StatelessWidget {
   }
 }
 
-// ===================== HELPER WIDGETS =====================
-
+// =====================================================
+// HELPER WIDGETS (UNCHANGED)
+// =====================================================
 class SectionWrapper extends StatelessWidget {
   final Widget child;
   final Color? color;
@@ -776,7 +1499,11 @@ class SectionWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: double.infinity, color: color, child: child);
+    return Container(
+      width: double.infinity,
+      color: color ?? Colors.black,
+      child: child,
+    );
   }
 }
 
@@ -819,7 +1546,7 @@ class _AnimatedRevealState extends State<AnimatedReveal>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
 
@@ -829,7 +1556,7 @@ class _AnimatedRevealState extends State<AnimatedReveal>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.08),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
