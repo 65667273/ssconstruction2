@@ -101,7 +101,7 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _preloadAssets() {
-    AssetLottie('images/landing.json').load();
+    Lottie.asset('images/landing.json');
   }
 
   @override
