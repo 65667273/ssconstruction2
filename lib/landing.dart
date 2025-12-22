@@ -42,21 +42,6 @@ class _LandingScreenState extends State<LandingScreen>
   bool _showPopup = false;
   int _activeSection = 0;
 
-  static const List<double> _sectionOffsets = [
-    400,
-    1100,
-    1900,
-    2700,
-    3500,
-    4300,
-    5100,
-    5900,
-    6700,
-    7500,
-    8300,
-    9100,
-  ];
-
   final List<NavigationItem> _navItems = const [
     NavigationItem(icon: Icons.home, label: 'Home'),
     NavigationItem(icon: Icons.info_outline, label: 'About'),
@@ -131,11 +116,20 @@ class _LandingScreenState extends State<LandingScreen>
     final offset = _scrollController.offset;
     bool needsUpdate = false;
 
+    // Dynamically detect active section based on scroll position
     int newActiveSection = 0;
-    for (int i = _sectionOffsets.length - 1; i >= 0; i--) {
-      if (offset >= _sectionOffsets[i]) {
-        newActiveSection = i + 1;
-        break;
+    for (int i = _sectionKeys.length - 1; i >= 0; i--) {
+      final key = _sectionKeys[i];
+      final context = key.currentContext;
+      if (context != null) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final position = box.localToGlobal(Offset.zero, ancestor: null);
+
+        // Check if section is in viewport (with some offset for navbar)
+        if (position.dy <= 150) {
+          newActiveSection = i;
+          break;
+        }
       }
     }
 
@@ -144,26 +138,21 @@ class _LandingScreenState extends State<LandingScreen>
       needsUpdate = true;
     }
 
-    final visibilityThresholds = [
-      200,
-      800,
-      1500,
-      2300,
-      3100,
-      3900,
-      4700,
-      5500,
-      6300,
-      7100,
-      7900,
-      8700,
-    ];
+    // Handle section visibility for lazy loading
+    for (int i = 1; i < _sectionKeys.length; i++) {
+      final key = _sectionKeys[i];
+      final context = key.currentContext;
+      if (context != null) {
+        final RenderBox box = context.findRenderObject() as RenderBox;
+        final position = box.localToGlobal(Offset.zero);
+        final screenHeight = MediaQuery.of(this.context).size.height;
 
-    for (int i = 1; i < visibilityThresholds.length; i++) {
-      final shouldBeVisible = offset > visibilityThresholds[i];
-      if (_sectionVisibility[i] != shouldBeVisible) {
-        _sectionVisibility[i] = shouldBeVisible;
-        needsUpdate = true;
+        // Make section visible if it's near viewport
+        final shouldBeVisible = position.dy < screenHeight + 300;
+        if (_sectionVisibility[i] != shouldBeVisible) {
+          _sectionVisibility[i] = shouldBeVisible;
+          needsUpdate = true;
+        }
       }
     }
 
@@ -175,20 +164,30 @@ class _LandingScreenState extends State<LandingScreen>
     final context = key.currentContext;
 
     if (context != null) {
-      // Calculate the position
-      final RenderBox renderBox = context.findRenderObject() as RenderBox;
-      final position = renderBox.localToGlobal(Offset.zero).dy;
-      final currentScroll = _scrollController.offset;
-      final targetScroll =
-          currentScroll + position - 100; // 100px offset for navbar
-
-      _scrollController.animateTo(
-        targetScroll.clamp(0.0, _scrollController.position.maxScrollExtent),
+      // Use Scrollable.ensureVisible for smooth, reliable scrolling
+      Scrollable.ensureVisible(
+        context,
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOutCubic,
+        alignment: 0.0, // Align to top
+        alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
       );
 
       setState(() => _activeSection = index);
+    } else {
+      // Fallback: try again after a short delay if context not available
+      Future.delayed(const Duration(milliseconds: 100), () {
+        final retryContext = key.currentContext;
+        if (retryContext != null && mounted) {
+          Scrollable.ensureVisible(
+            retryContext,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOutCubic,
+            alignment: 0.0,
+          );
+          setState(() => _activeSection = index);
+        }
+      });
     }
   }
 
@@ -1195,7 +1194,7 @@ I'm interested in your services.''';
                 const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 12),
                 Text(
-                  'submit',
+                  'Submit via WhatsApp',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: isMobile ? 16 : 18,
@@ -1213,7 +1212,7 @@ I'm interested in your services.''';
 }
 
 // =====================================================
-// NAVIGATION COMPONENTS (UNCHANGED)
+// NAVIGATION COMPONENTS
 // =====================================================
 class NavigationItem {
   final IconData icon;
@@ -1415,7 +1414,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
 }
 
 // =====================================================
-// SCROLL PROGRESS INDICATOR (UNCHANGED)
+// SCROLL PROGRESS INDICATOR
 // =====================================================
 class ScrollProgressIndicator extends StatelessWidget {
   final ScrollController controller;
@@ -1489,7 +1488,7 @@ class ScrollProgressIndicator extends StatelessWidget {
 }
 
 // =====================================================
-// HELPER WIDGETS (UNCHANGED)
+// HELPER WIDGETS
 // =====================================================
 class SectionWrapper extends StatelessWidget {
   final Widget child;
