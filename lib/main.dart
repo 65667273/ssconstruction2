@@ -31,16 +31,7 @@ class SSConstructionCinematicApp extends StatelessWidget {
 
           return Scaffold(
             backgroundColor: Colors.black,
-            body: Center(
-              child: ModernHeroSection(
-                isMobile: isMobile,
-                isTablet: isTablet,
-                scrollToSection: (index) {
-                  print('Section clicked: $index');
-                  // Add scroll functionality here
-                },
-              ),
-            ),
+            body: Center(child: ModernLandingPage()),
           );
         },
       ),
