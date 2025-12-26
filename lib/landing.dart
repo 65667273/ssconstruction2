@@ -26,6 +26,7 @@ class _LandingScreenState extends State<LandingScreen>
   // Section Keys for Navigation
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
+  final GlobalKey _roadRollerKey = GlobalKey();
   final GlobalKey _projectsKey = GlobalKey();
   final GlobalKey _howWeWorkKey = GlobalKey();
   final GlobalKey _machineryKey = GlobalKey();
@@ -44,6 +45,7 @@ class _LandingScreenState extends State<LandingScreen>
   final List<NavigationItem> _navItems = const [
     NavigationItem(icon: Icons.home, label: 'Home'),
     NavigationItem(icon: Icons.info_outline, label: 'About'),
+    NavigationItem(icon: Icons.construction_outlined, label: 'Road Roller'),
     NavigationItem(icon: Icons.work_outline, label: 'Projects'),
     NavigationItem(icon: Icons.construction, label: 'How We Work'),
     NavigationItem(icon: Icons.precision_manufacturing, label: 'Machinery'),
@@ -60,9 +62,11 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   void initState() {
     super.initState();
+
     _sectionKeys = [
       _heroKey,
       _aboutKey,
+      _roadRollerKey,
       _projectsKey,
       _howWeWorkKey,
       _machineryKey,
@@ -74,7 +78,7 @@ class _LandingScreenState extends State<LandingScreen>
       _contactKey,
     ];
 
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 12; i++) {
       _sectionVisibility[i] = i == 0;
     }
 
@@ -97,7 +101,7 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _preloadAssets() {
-    Lottie.asset('images/landing.json');
+    Lottie.asset('assets/images/landing.json');
   }
 
   @override
@@ -120,6 +124,7 @@ class _LandingScreenState extends State<LandingScreen>
       if (context != null) {
         final RenderBox box = context.findRenderObject() as RenderBox;
         final position = box.localToGlobal(Offset.zero, ancestor: null);
+
         // Check if section is in viewport (with some offset for navbar)
         if (position.dy <= 150) {
           newActiveSection = i;
@@ -144,7 +149,6 @@ class _LandingScreenState extends State<LandingScreen>
 
         // Make section visible if it's near viewport
         final shouldBeVisible = position.dy < screenHeight + 300;
-
         if (_sectionVisibility[i] != shouldBeVisible) {
           _sectionVisibility[i] = shouldBeVisible;
           needsUpdate = true;
@@ -158,6 +162,7 @@ class _LandingScreenState extends State<LandingScreen>
   void _scrollToSection(int index) {
     final key = _sectionKeys[index];
     final context = key.currentContext;
+
     if (context != null) {
       // Use Scrollable.ensureVisible for smooth, reliable scrolling
       Scrollable.ensureVisible(
@@ -167,6 +172,7 @@ class _LandingScreenState extends State<LandingScreen>
         alignment: 0.0, // Align to top
         alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
       );
+
       setState(() => _activeSection = index);
     } else {
       // Fallback: try again after a short delay if context not available
@@ -196,6 +202,7 @@ class _LandingScreenState extends State<LandingScreen>
       body: Stack(
         children: [
           const ColoredBox(color: Colors.black),
+
           SingleChildScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
@@ -207,57 +214,63 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
                 _buildLazySection(_aboutKey, 1, const AboutSection(), 600),
                 _buildLazySection(
-                  _projectsKey,
+                  _roadRollerKey,
                   2,
+                  const RoadRollerPage(),
+                  700,
+                ),
+                _buildLazySection(
+                  _projectsKey,
+                  3,
                   const ProjectsSection(),
                   800,
                 ),
                 _buildLazySection(
                   _howWeWorkKey,
-                  3,
+                  4,
                   const HowWeWorkSection(),
                   900,
                   const Color(0xFF060606),
                 ),
                 _buildLazySection(
                   _machineryKey,
-                  4,
+                  5,
                   const MachinerySection(),
                   700,
                 ),
                 _buildLazySection(
                   _qualityKey,
-                  5,
+                  6,
                   const QualityStandardsSection(),
                   600,
                 ),
                 _buildLazySection(
                   _teamKey,
-                  6,
+                  7,
                   const TeamStrengthSection(),
                   600,
                 ),
                 _buildLazySection(
                   _mediaKey,
-                  7,
+                  8,
                   const MediaGallerySection(),
                   800,
                 ),
                 _buildLazySection(
                   _whyChooseKey,
-                  8,
+                  9,
                   const WhyChooseSSSection(),
                   700,
                 ),
                 _buildLazySection(
                   _featuresKey,
-                  9,
+                  10,
                   const InteractiveFeaturesSection(),
                   600,
                 ),
                 _buildLazySection(
                   _contactKey,
-                  10,
+                  11,
                   const ContactSection(),
                   700,
                   const Color(0xFF060606),
@@ -266,6 +279,7 @@ class _LandingScreenState extends State<LandingScreen>
               ],
             ),
           ),
+
           // Floating Navigation Bar
           AnimatedPositioned(
             duration: const Duration(milliseconds: 500),
@@ -279,6 +293,7 @@ class _LandingScreenState extends State<LandingScreen>
               onTap: _scrollToSection,
             ),
           ),
+
           // Scroll Progress Indicator
           if (!isMobile)
             Positioned(
@@ -288,16 +303,18 @@ class _LandingScreenState extends State<LandingScreen>
               child: ScrollProgressIndicator(
                 controller: _scrollController,
                 activeSection: _activeSection,
-                totalSections: 11,
+                totalSections: 12,
                 onTap: _scrollToSection,
               ),
             ),
+
           // Sticky WhatsApp Button
           Positioned(
             right: 20,
             bottom: 20,
             child: WhatsAppFloatingButton(phoneNumber: '+919823388866'),
           ),
+
           // Modern Popup Form
           if (_showPopup)
             ModernPopupForm(
@@ -357,6 +374,7 @@ class _LandingScreenState extends State<LandingScreen>
 
   Widget _buildLottieHeroSection(bool isMobile, bool isTablet) {
     final height = isMobile ? 600.0 : (isTablet ? 650.0 : 750.0);
+
     return RepaintBoundary(
       child: SizedBox(
         height: height,
@@ -364,7 +382,7 @@ class _LandingScreenState extends State<LandingScreen>
           children: [
             Positioned.fill(
               child: Lottie.asset(
-                'images/landing.json',
+                'assets/images/landing.json',
                 fit: BoxFit.cover,
                 animate: true,
                 repeat: true,
@@ -428,6 +446,7 @@ class _LandingScreenState extends State<LandingScreen>
             final xPos = 0.1 + (index % 5) * 0.18;
             final yPos = offset;
             final size = 1.5 + (index % 2) * 1.0;
+
             return Positioned(
               left: MediaQuery.of(context).size.width * xPos,
               top: height * yPos,
@@ -574,14 +593,14 @@ class _LandingScreenState extends State<LandingScreen>
               icon: Icons.arrow_forward_rounded,
               isPrimary: true,
               isMobile: isMobile,
-              onTap: () => _scrollToSection(2),
+              onTap: () => _scrollToSection(3),
             ),
             _buildCTAButton(
               label: 'Contact Us',
               icon: Icons.phone_outlined,
               isPrimary: false,
               isMobile: isMobile,
-              onTap: () => _scrollToSection(10),
+              onTap: () => _scrollToSection(11),
             ),
           ],
         ),
@@ -790,6 +809,7 @@ class _ModernPopupFormState extends State<ModernPopupForm>
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
   String _selectedService = 'Service 1';
+
   final List<String> _services = ['Service 1', 'Service 2', 'Service 3'];
 
   @override
@@ -799,11 +819,14 @@ class _ModernPopupFormState extends State<ModernPopupForm>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+
     _scaleAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOutBack,
     );
+
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
     _controller.forward();
   }
 

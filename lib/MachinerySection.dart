@@ -19,84 +19,88 @@ class _MachinerySectionState extends State<MachinerySection>
   bool _isVisible = false;
 
   final List<MachineItem> machines = [
-    MachineItem(imagePath: 'images/jcb.jpg', name: 'JCB', quantity: '4 Units'),
     MachineItem(
-      imagePath: 'images/chota_roller.jpg',
+      imagePath: 'assets/images/jcb.jpg',
+      name: 'JCB',
+      quantity: '4 Units',
+    ),
+    MachineItem(
+      imagePath: 'assetsimages/chota_roller.jpg',
       name: 'Chota Rollar',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/motha_roller.jpg',
+      imagePath: 'assets/images/motha_roller.jpg',
       name: 'Motha Rollar',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/ajax_machine.jpg',
+      imagePath: 'assets/images/ajax_machine.jpg',
       name: 'AJAX Machine',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/bullero.jpg',
+      imagePath: 'assets/images/bullero.jpg',
       name: 'Bullero',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/hand_mixer.jpg',
+      imagePath: 'assets/images/hand_mixer.jpg',
       name: 'Hand Mixer Machines',
       quantity: '2 Units',
     ),
     MachineItem(
-      imagePath: 'images/plate_compactor.jpg',
+      imagePath: 'assets/images/plate_compactor.jpg',
       name: 'Plate Compactor',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/skid_machine.jpg',
+      imagePath: 'assets/images/skid_machine.jpg',
       name: 'Skid Machines for Road Making',
       quantity: '2 Units',
     ),
     MachineItem(
-      imagePath: 'images/vibrator.jpg',
+      imagePath: 'assets/images/vibrator.jpg',
       name: 'Vibrators',
       quantity: '2 Units',
     ),
     MachineItem(
-      imagePath: 'images/vibrator_needle.jpg',
+      imagePath: 'assets/images/vibrator_needle.jpg',
       name: 'Vibrator Needles',
       quantity: '2 Units',
     ),
     MachineItem(
-      imagePath: 'images/fan_floater.jpg',
+      imagePath: 'assets/images/fan_floater.jpg',
       name: 'Fan Floater',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/road_cutting.png',
+      imagePath: 'assets/images/road_cutting.png',
       name: 'Road Cutting Machine',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/road_channel.jpg',
+      imagePath: 'assets/images/road_channel.jpg',
       name: 'Road Channels',
       quantity: 'Multiple',
     ),
     MachineItem(
-      imagePath: 'images/dewatering_5hp.jpg',
+      imagePath: 'assets/images/dewatering_5hp.jpg',
       name: 'Dewatering Machine (5 HP)',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/dewatering_2hp.jpg',
+      imagePath: 'assets/images/dewatering_2hp.jpg',
       name: 'Dewatering Machine (2 HP)',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/diesel_pump.jpg',
+      imagePath: 'assets/images/diesel_pump.jpg',
       name: 'Diesel Pump for Dewatering',
       quantity: '1 Unit',
     ),
     MachineItem(
-      imagePath: 'images/dewatering_pump_2_5hp.jpg',
+      imagePath: 'assets/images/dewatering_pump_2_5hp.jpg',
       name: 'Dewatering Pumps (2.5 HP)',
       quantity: '2 Units',
     ),
