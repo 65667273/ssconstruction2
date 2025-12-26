@@ -20,7 +20,7 @@ class _HowWeWorkSectionState extends State<HowWeWorkSection>
       title: 'Cement Road Construction',
       icon: Icons.construction,
       imageUrl:
-          'https://fra.cloud.appwrite.io/v1/storage/buckets/69410e4f002f12a6a22b/files/6948f8a50029504b64bb/view?project=69410e2700329697a6d1&mode=admin',
+          'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
       gradient: const [Color(0xFFFBBF24), Color(0xFFF97316)],
       steps: [
         'Site survey & soil testing',
@@ -42,7 +42,7 @@ class _HowWeWorkSectionState extends State<HowWeWorkSection>
       title: 'Sewer Line Work',
       icon: Icons.water_drop,
       imageUrl:
-          'https://fra.cloud.appwrite.io/v1/storage/buckets/69410e4f002f12a6a22b/files/6948fa1a001abefa48c3/view?project=69410e2700329697a6d1&mode=admin',
+          'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
       gradient: const [Color(0xFF60A5FA), Color(0xFF06B6D4)],
       steps: [
         'Trenching with JCB & rollers',
@@ -76,7 +76,7 @@ class _HowWeWorkSectionState extends State<HowWeWorkSection>
       title: 'Water Line Work',
       icon: Icons.water,
       imageUrl:
-          'https://fra.cloud.appwrite.io/v1/storage/buckets/69410e4f002f12a6a22b/files/6948fa7a0003ceea30b8/view?project=69410e2700329697a6d1&mode=admin',
+          'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
       gradient: const [Color(0xFF22D3EE), Color(0xFF3B82F6)],
       steps: [
         'Pipeline design as per layout size',
@@ -93,7 +93,7 @@ class _HowWeWorkSectionState extends State<HowWeWorkSection>
       title: 'Children Play Area & Walking Path',
       icon: Icons.park,
       imageUrl:
-          'https://fra.cloud.appwrite.io/v1/storage/buckets/69410e4f002f12a6a22b/files/6948fab50011ba19765d/view?project=69410e2700329697a6d1&mode=admin',
+          'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
       gradient: const [Color(0xFF4ADE80), Color(0xFF10B981)],
       steps: [
         'Excavation & leveling of ground',
@@ -110,7 +110,7 @@ class _HowWeWorkSectionState extends State<HowWeWorkSection>
       title: 'STP Installation',
       icon: Icons.recycling,
       imageUrl:
-          'https://fra.cloud.appwrite.io/v1/storage/buckets/69410e4f002f12a6a22b/files/6948fb07001cb1b7e673/view?project=69410e2700329697a6d1&mode=admin',
+          'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&q=80',
       gradient: const [Color(0xFF2DD4BF), Color(0xFF10B981)],
       steps: [
         'Design as per layout population load',

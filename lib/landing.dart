@@ -216,7 +216,7 @@ class _LandingScreenState extends State<LandingScreen>
                 _buildLazySection(
                   _roadRollerKey,
                   2,
-                  const RoadRollerPage(),
+                  const ProjectsSection(),
                   700,
                 ),
                 _buildLazySection(
