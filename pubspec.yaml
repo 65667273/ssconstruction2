@@ -45,8 +45,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
-    - assets/images/landing.json
+    - images/
+    - images/landing.json
 
   # Uncomment below if you have custom fonts
   # fonts:

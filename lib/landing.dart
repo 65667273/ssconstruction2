@@ -88,6 +88,8 @@ class _LandingScreenState extends State<LandingScreen>
       duration: const Duration(seconds: 14),
     )..repeat();
 
+    _preloadAssets();
+
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) setState(() => _showNavBar = true);
     });
@@ -96,6 +98,10 @@ class _LandingScreenState extends State<LandingScreen>
     Future.delayed(const Duration(seconds: 10), () {
       if (mounted) setState(() => _showPopup = true);
     });
+  }
+
+  void _preloadAssets() {
+    Lottie.asset('images/landing.json');
   }
 
   @override
@@ -119,7 +125,6 @@ class _LandingScreenState extends State<LandingScreen>
         final RenderBox box = context.findRenderObject() as RenderBox;
         final position = box.localToGlobal(Offset.zero, ancestor: null);
 
-        // Check if section is in viewport (with some offset for navbar)
         if (position.dy <= 150) {
           newActiveSection = i;
           break;
@@ -139,9 +144,8 @@ class _LandingScreenState extends State<LandingScreen>
       if (context != null) {
         final RenderBox box = context.findRenderObject() as RenderBox;
         final position = box.localToGlobal(Offset.zero);
-        final screenHeight = MediaQuery.of(this.context).size.height;
+        final screenHeight = MediaQuery.of(context).size.height;
 
-        // Make section visible if it's near viewport
         final shouldBeVisible = position.dy < screenHeight + 300;
         if (_sectionVisibility[i] != shouldBeVisible) {
           _sectionVisibility[i] = shouldBeVisible;
@@ -158,18 +162,15 @@ class _LandingScreenState extends State<LandingScreen>
     final context = key.currentContext;
 
     if (context != null) {
-      // Use Scrollable.ensureVisible for smooth, reliable scrolling
       Scrollable.ensureVisible(
         context,
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOutCubic,
-        alignment: 0.0, // Align to top
-        alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
+        alignment: 0.0,
       );
 
       setState(() => _activeSection = index);
     } else {
-      // Fallback: try again after a short delay if context not available
       Future.delayed(const Duration(milliseconds: 100), () {
         final retryContext = key.currentContext;
         if (retryContext != null && mounted) {
@@ -376,12 +377,15 @@ class _LandingScreenState extends State<LandingScreen>
           children: [
             Positioned.fill(
               child: Lottie.asset(
-                'assets/images/landing.json',
+                'images/landing.json',
                 fit: BoxFit.cover,
                 animate: true,
                 repeat: true,
+                frameRate: FrameRate(60),
               ),
             ),
+
+            // === REDUCED DARK OVERLAY FOR BETTER ANIMATION VISIBILITY ===
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -389,15 +393,20 @@ class _LandingScreenState extends State<LandingScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.7),
-                      Colors.black.withOpacity(0.4),
-                      Colors.black.withOpacity(0.8),
+                      Colors.black.withOpacity(0.3), // Much lighter at top
+                      Colors.black.withOpacity(
+                        0.1,
+                      ), // Almost transparent in middle
+                      Colors.black.withOpacity(
+                        0.4,
+                      ), // Slightly darker at bottom for text readability
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
                 ),
               ),
             ),
+
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
