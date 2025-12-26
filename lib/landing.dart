@@ -196,6 +196,7 @@ class _LandingScreenState extends State<LandingScreen>
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
     final isTablet = size.width >= 600 && size.width < 900;
+    final isDesktop = size.width >= 900;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -210,7 +211,7 @@ class _LandingScreenState extends State<LandingScreen>
               children: [
                 SectionWrapper(
                   key: _heroKey,
-                  child: _buildLottieHeroSection(isMobile, isTablet),
+                  child: _buildLottieHeroSection(isMobile, isTablet, isDesktop),
                 ),
                 _buildLazySection(_aboutKey, 1, const AboutSection(), 600),
                 _buildLazySection(
@@ -372,14 +373,16 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildLottieHeroSection(bool isMobile, bool isTablet) {
-    final height = isMobile ? 600.0 : (isTablet ? 650.0 : 750.0);
+  Widget _buildLottieHeroSection(bool isMobile, bool isTablet, bool isDesktop) {
+    final height = isDesktop ? 850.0 : (isTablet ? 650.0 : 600.0);
+    final particleCount = isDesktop ? 12 : 8;
 
     return RepaintBoundary(
       child: SizedBox(
         height: height,
         child: Stack(
           children: [
+            // Background Lottie Animation
             Positioned.fill(
               child: Lottie.asset(
                 'images/landing.json',
@@ -389,6 +392,8 @@ class _LandingScreenState extends State<LandingScreen>
                 frameRate: FrameRate(60),
               ),
             ),
+
+            // Gradient Overlay
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -405,24 +410,72 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
               ),
             ),
+
+            // Desktop Background Elements
+            if (isDesktop) ...[
+              Positioned(
+                right: -100,
+                top: -100,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFFBBF24).withOpacity(0.1),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: -100,
+                bottom: -100,
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFF59E0B).withOpacity(0.08),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
+            // Main Content
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
                   physics: const NeverScrollableScrollPhysics(),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
+                    constraints: const BoxConstraints(maxWidth: 1400),
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 24 : (isTablet ? 40 : 60),
-                        vertical: isMobile ? 40 : 60,
+                        horizontal: isDesktop ? 80 : (isTablet ? 40 : 24),
+                        vertical: isDesktop ? 80 : (isTablet ? 60 : 40),
                       ),
-                      child: _buildAnimatedHeroContent(isMobile, isTablet),
+                      child: _buildAnimatedHeroContent(
+                        isMobile,
+                        isTablet,
+                        isDesktop,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-            if (!isMobile) ..._buildParticles(height, 8),
+
+            // Particles
+            if (!isMobile) ..._buildParticles(height, particleCount),
+
+            // Scroll Indicator
             Positioned(
               bottom: 30,
               left: 0,
@@ -472,15 +525,20 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildAnimatedHeroContent(bool isMobile, bool isTablet) {
+  Widget _buildAnimatedHeroContent(
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Top Badge
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 16 : 24,
-            vertical: isMobile ? 8 : 12,
+            horizontal: isDesktop ? 28 : (isTablet ? 24 : 16),
+            vertical: isDesktop ? 14 : (isTablet ? 12 : 8),
           ),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -499,12 +557,12 @@ class _LandingScreenState extends State<LandingScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
-              SizedBox(width: isMobile ? 8 : 12),
+              SizedBox(width: isDesktop ? 12 : (isTablet ? 10 : 8)),
               Text(
                 'Building Excellence Since 2000',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: isMobile ? 11 : (isTablet ? 13 : 15),
+                  fontSize: isDesktop ? 16 : (isTablet ? 13 : 11),
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -512,7 +570,10 @@ class _LandingScreenState extends State<LandingScreen>
             ],
           ),
         ),
-        SizedBox(height: isMobile ? 30 : 40),
+
+        SizedBox(height: isDesktop ? 50 : (isTablet ? 40 : 30)),
+
+        // Main Title with Gradient
         ShaderMask(
           shaderCallback: (bounds) {
             return const LinearGradient(
@@ -523,26 +584,29 @@ class _LandingScreenState extends State<LandingScreen>
             'SS Construction',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isMobile ? 40 : (isTablet ? 60 : 80),
+              fontSize: isDesktop ? 100 : (isTablet ? 60 : 40),
               fontWeight: FontWeight.w900,
               height: 1.1,
               color: Colors.white,
-              letterSpacing: 1.5,
+              letterSpacing: isDesktop ? 2.0 : 1.5,
               shadows: [
                 Shadow(
                   color: const Color(0xFFFBBF24).withOpacity(0.6),
-                  blurRadius: 30,
-                  offset: const Offset(0, 8),
+                  blurRadius: isDesktop ? 40 : 30,
+                  offset: Offset(0, isDesktop ? 12 : 8),
                 ),
               ],
             ),
           ),
         ),
-        SizedBox(height: isMobile ? 20 : 28),
+
+        SizedBox(height: isDesktop ? 35 : (isTablet ? 28 : 20)),
+
+        // Subtitle Box
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 20 : 28,
-            vertical: isMobile ? 10 : 14,
+            horizontal: isDesktop ? 32 : (isTablet ? 28 : 20),
+            vertical: isDesktop ? 18 : (isTablet ? 14 : 10),
           ),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.4),
@@ -556,7 +620,7 @@ class _LandingScreenState extends State<LandingScreen>
             'Transforming Visions into Reality',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isMobile ? 18 : (isTablet ? 24 : 28),
+              fontSize: isDesktop ? 32 : (isTablet ? 24 : 18),
               fontWeight: FontWeight.w600,
               color: const Color(0xFFFBBF24),
               letterSpacing: 1.2,
@@ -564,17 +628,20 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
         ),
-        SizedBox(height: isMobile ? 24 : 32),
+
+        SizedBox(height: isDesktop ? 40 : (isTablet ? 32 : 24)),
+
+        // Description
         Container(
           constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : (isTablet ? 600 : 700),
+            maxWidth: isDesktop ? 900 : (isTablet ? 600 : double.infinity),
           ),
-          padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+          padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20 : 0),
           child: Text(
-            'Leading construction company delivering innovative infrastructure solutions with precision, quality, and excellence.',
+            'Leading construction company delivering innovative infrastructure solutions with precision, quality, and excellence across the nation.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isMobile ? 14 : (isTablet ? 16 : 18),
+              fontSize: isDesktop ? 20 : (isTablet ? 16 : 14),
               color: Colors.white.withOpacity(0.9),
               height: 1.6,
               letterSpacing: 0.3,
@@ -582,25 +649,32 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
         ),
-        SizedBox(height: isMobile ? 35 : 50),
+
+        SizedBox(height: isDesktop ? 60 : (isTablet ? 50 : 35)),
+
+        // CTA Buttons
         Wrap(
           alignment: WrapAlignment.center,
-          spacing: isMobile ? 12 : 20,
-          runSpacing: isMobile ? 12 : 20,
+          spacing: isDesktop ? 28 : (isTablet ? 20 : 12),
+          runSpacing: isDesktop ? 28 : (isTablet ? 20 : 12),
           children: [
             _buildCTAButton(
               label: 'Explore Projects',
               icon: Icons.arrow_forward_rounded,
               isPrimary: true,
               isMobile: isMobile,
+              isDesktop: isDesktop,
               onTap: () => _scrollToSection(3),
+              isTablet: isTablet,
             ),
             _buildCTAButton(
               label: 'Contact Us',
               icon: Icons.phone_outlined,
               isPrimary: false,
               isMobile: isMobile,
+              isDesktop: isDesktop,
               onTap: () => _scrollToSection(11),
+              isTablet: isTablet,
             ),
           ],
         ),
@@ -613,6 +687,8 @@ class _LandingScreenState extends State<LandingScreen>
     required IconData icon,
     required bool isPrimary,
     required bool isMobile,
+    required bool isTablet,
+    required bool isDesktop,
     required VoidCallback onTap,
   }) {
     return MouseRegion(
@@ -632,8 +708,8 @@ class _LandingScreenState extends State<LandingScreen>
             BoxShadow(
               color: (isPrimary ? const Color(0xFFFBBF24) : Colors.transparent)
                   .withOpacity(0.4),
-              blurRadius: 20,
-              spreadRadius: 2,
+              blurRadius: isDesktop ? 25 : 20,
+              spreadRadius: isDesktop ? 3 : 2,
             ),
           ],
         ),
@@ -644,8 +720,8 @@ class _LandingScreenState extends State<LandingScreen>
             borderRadius: BorderRadius.circular(35),
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 24 : 32,
-                vertical: isMobile ? 14 : 18,
+                horizontal: isDesktop ? 40 : (isTablet ? 32 : 24),
+                vertical: isDesktop ? 22 : (isTablet ? 18 : 14),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -654,13 +730,17 @@ class _LandingScreenState extends State<LandingScreen>
                     label,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: isMobile ? 14 : 17,
+                      fontSize: isDesktop ? 19 : (isTablet ? 17 : 14),
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Icon(icon, color: Colors.white, size: isMobile ? 18 : 22),
+                  SizedBox(width: isDesktop ? 14 : 10),
+                  Icon(
+                    icon,
+                    color: Colors.white,
+                    size: isDesktop ? 24 : (isTablet ? 22 : 18),
+                  ),
                 ],
               ),
             ),
