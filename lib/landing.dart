@@ -94,7 +94,6 @@ class _LandingScreenState extends State<LandingScreen>
       if (mounted) setState(() => _showNavBar = true);
     });
 
-    // Show popup after 10 seconds
     Future.delayed(const Duration(seconds: 10), () {
       if (mounted) setState(() => _showPopup = true);
     });
@@ -116,14 +115,13 @@ class _LandingScreenState extends State<LandingScreen>
     final offset = _scrollController.offset;
     bool needsUpdate = false;
 
-    // Dynamically detect active section based on scroll position
     int newActiveSection = 0;
     for (int i = _sectionKeys.length - 1; i >= 0; i--) {
       final key = _sectionKeys[i];
       final context = key.currentContext;
       if (context != null) {
         final RenderBox box = context.findRenderObject() as RenderBox;
-        final position = box.localToGlobal(Offset.zero, ancestor: null);
+        final position = box.localToGlobal(Offset.zero);
 
         if (position.dy <= 150) {
           newActiveSection = i;
@@ -137,7 +135,6 @@ class _LandingScreenState extends State<LandingScreen>
       needsUpdate = true;
     }
 
-    // Handle section visibility for lazy loading
     for (int i = 1; i < _sectionKeys.length; i++) {
       final key = _sectionKeys[i];
       final context = key.currentContext;
@@ -275,7 +272,6 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
 
-          // Floating Navigation Bar
           AnimatedPositioned(
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCubic,
@@ -289,7 +285,6 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
 
-          // Scroll Progress Indicator
           if (!isMobile)
             Positioned(
               right: 20,
@@ -303,14 +298,12 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             ),
 
-          // Sticky WhatsApp Button
           Positioned(
             right: 20,
             bottom: 20,
             child: WhatsAppFloatingButton(phoneNumber: '+919823388866'),
           ),
 
-          // Modern Popup Form
           if (_showPopup)
             ModernPopupForm(
               onClose: () => setState(() => _showPopup = false),
@@ -367,14 +360,19 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // ==================== FIXED HERO SECTION ====================
   Widget _buildLottieHeroSection(bool isMobile, bool isTablet) {
-    final height = isMobile ? 600.0 : (isTablet ? 650.0 : 750.0);
+    final double height = isMobile
+        ? 600.0
+        : (isTablet ? 700.0 : 850.0); // Increased for desktop
 
     return RepaintBoundary(
       child: SizedBox(
         height: height,
+        width: double.infinity,
         child: Stack(
           children: [
+            // Lottie Background
             Positioned.fill(
               child: Lottie.asset(
                 'images/landing.json',
@@ -385,7 +383,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             ),
 
-            // === REDUCED DARK OVERLAY FOR BETTER ANIMATION VISIBILITY ===
+            // Dark Overlay
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -393,13 +391,9 @@ class _LandingScreenState extends State<LandingScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.3), // Much lighter at top
-                      Colors.black.withOpacity(
-                        0.1,
-                      ), // Almost transparent in middle
-                      Colors.black.withOpacity(
-                        0.4,
-                      ), // Slightly darker at bottom for text readability
+                      Colors.black.withOpacity(0.3),
+                      Colors.black.withOpacity(0.1),
+                      Colors.black.withOpacity(0.4),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -407,24 +401,32 @@ class _LandingScreenState extends State<LandingScreen>
               ),
             ),
 
+            // Main Content - Properly Centered
             SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1200),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 24 : (isTablet ? 40 : 60),
-                        vertical: isMobile ? 40 : 60,
-                      ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 24 : (isTablet ? 40 : 80),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(flex: 2),
+
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1000),
                       child: _buildAnimatedHeroContent(isMobile, isTablet),
                     ),
-                  ),
+
+                    const Spacer(flex: 3),
+                  ],
                 ),
               ),
             ),
+
+            // Particles (desktop/tablet only)
             if (!isMobile) ..._buildParticles(height, 8),
+
+            // Scroll Indicator
             Positioned(
               bottom: 30,
               left: 0,
@@ -705,9 +707,8 @@ class _LandingScreenState extends State<LandingScreen>
   }
 }
 
-// =====================================================
-// WHATSAPP FLOATING BUTTON
-// =====================================================
+// ==================== REST OF THE CODE (UNCHANGED) ====================
+
 class WhatsAppFloatingButton extends StatefulWidget {
   final String phoneNumber;
 
@@ -783,9 +784,6 @@ class _WhatsAppFloatingButtonState extends State<WhatsAppFloatingButton>
   }
 }
 
-// =====================================================
-// MODERN POPUP FORM
-// =====================================================
 class ModernPopupForm extends StatefulWidget {
   final VoidCallback onClose;
   final String phoneNumber;
@@ -1213,9 +1211,6 @@ I'm interested in your services.''';
   }
 }
 
-// =====================================================
-// NAVIGATION COMPONENTS
-// =====================================================
 class NavigationItem {
   final IconData icon;
   final String label;
@@ -1415,9 +1410,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
   }
 }
 
-// =====================================================
-// SCROLL PROGRESS INDICATOR
-// =====================================================
 class ScrollProgressIndicator extends StatelessWidget {
   final ScrollController controller;
   final int activeSection;
@@ -1489,9 +1481,6 @@ class ScrollProgressIndicator extends StatelessWidget {
   }
 }
 
-// =====================================================
-// HELPER WIDGETS
-// =====================================================
 class SectionWrapper extends StatelessWidget {
   final Widget child;
   final Color? color;
