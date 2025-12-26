@@ -26,7 +26,6 @@ class _LandingScreenState extends State<LandingScreen>
   // Section Keys for Navigation
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
-  final GlobalKey _roadRollerKey = GlobalKey();
   final GlobalKey _projectsKey = GlobalKey();
   final GlobalKey _howWeWorkKey = GlobalKey();
   final GlobalKey _machineryKey = GlobalKey();
@@ -45,7 +44,6 @@ class _LandingScreenState extends State<LandingScreen>
   final List<NavigationItem> _navItems = const [
     NavigationItem(icon: Icons.home, label: 'Home'),
     NavigationItem(icon: Icons.info_outline, label: 'About'),
-    NavigationItem(icon: Icons.construction_outlined, label: 'Road Roller'),
     NavigationItem(icon: Icons.work_outline, label: 'Projects'),
     NavigationItem(icon: Icons.construction, label: 'How We Work'),
     NavigationItem(icon: Icons.precision_manufacturing, label: 'Machinery'),
@@ -62,11 +60,9 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   void initState() {
     super.initState();
-
     _sectionKeys = [
       _heroKey,
       _aboutKey,
-      _roadRollerKey,
       _projectsKey,
       _howWeWorkKey,
       _machineryKey,
@@ -78,7 +74,7 @@ class _LandingScreenState extends State<LandingScreen>
       _contactKey,
     ];
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 11; i++) {
       _sectionVisibility[i] = i == 0;
     }
 
@@ -124,7 +120,6 @@ class _LandingScreenState extends State<LandingScreen>
       if (context != null) {
         final RenderBox box = context.findRenderObject() as RenderBox;
         final position = box.localToGlobal(Offset.zero, ancestor: null);
-
         // Check if section is in viewport (with some offset for navbar)
         if (position.dy <= 150) {
           newActiveSection = i;
@@ -149,6 +144,7 @@ class _LandingScreenState extends State<LandingScreen>
 
         // Make section visible if it's near viewport
         final shouldBeVisible = position.dy < screenHeight + 300;
+
         if (_sectionVisibility[i] != shouldBeVisible) {
           _sectionVisibility[i] = shouldBeVisible;
           needsUpdate = true;
@@ -162,17 +158,15 @@ class _LandingScreenState extends State<LandingScreen>
   void _scrollToSection(int index) {
     final key = _sectionKeys[index];
     final context = key.currentContext;
-
     if (context != null) {
       // Use Scrollable.ensureVisible for smooth, reliable scrolling
       Scrollable.ensureVisible(
         context,
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOutCubic,
-        alignment: 0.0,
+        alignment: 0.0, // Align to top
         alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
       );
-
       setState(() => _activeSection = index);
     } else {
       // Fallback: try again after a short delay if context not available
@@ -194,15 +188,14 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final screenWidth = size.width;
-    final screenHeight = size.height;
+    final isMobile = size.width < 600;
+    final isTablet = size.width >= 600 && size.width < 900;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           const ColoredBox(color: Colors.black),
-
           SingleChildScrollView(
             controller: _scrollController,
             physics: const BouncingScrollPhysics(),
@@ -210,67 +203,61 @@ class _LandingScreenState extends State<LandingScreen>
               children: [
                 SectionWrapper(
                   key: _heroKey,
-                  child: _buildLottieHeroSection(screenWidth, screenHeight),
+                  child: _buildLottieHeroSection(isMobile, isTablet),
                 ),
                 _buildLazySection(_aboutKey, 1, const AboutSection(), 600),
                 _buildLazySection(
-                  _roadRollerKey,
-                  2,
-                  const ProjectsSection(),
-                  700,
-                ),
-                _buildLazySection(
                   _projectsKey,
-                  3,
+                  2,
                   const ProjectsSection(),
                   800,
                 ),
                 _buildLazySection(
                   _howWeWorkKey,
-                  4,
+                  3,
                   const HowWeWorkSection(),
                   900,
                   const Color(0xFF060606),
                 ),
                 _buildLazySection(
                   _machineryKey,
-                  5,
+                  4,
                   const MachinerySection(),
                   700,
                 ),
                 _buildLazySection(
                   _qualityKey,
-                  6,
+                  5,
                   const QualityStandardsSection(),
                   600,
                 ),
                 _buildLazySection(
                   _teamKey,
-                  7,
+                  6,
                   const TeamStrengthSection(),
                   600,
                 ),
                 _buildLazySection(
                   _mediaKey,
-                  8,
+                  7,
                   const MediaGallerySection(),
                   800,
                 ),
                 _buildLazySection(
                   _whyChooseKey,
-                  9,
+                  8,
                   const WhyChooseSSSection(),
                   700,
                 ),
                 _buildLazySection(
                   _featuresKey,
-                  10,
+                  9,
                   const InteractiveFeaturesSection(),
                   600,
                 ),
                 _buildLazySection(
                   _contactKey,
-                  11,
+                  10,
                   const ContactSection(),
                   700,
                   const Color(0xFF060606),
@@ -279,7 +266,6 @@ class _LandingScreenState extends State<LandingScreen>
               ],
             ),
           ),
-
           // Floating Navigation Bar
           AnimatedPositioned(
             duration: const Duration(milliseconds: 500),
@@ -293,14 +279,25 @@ class _LandingScreenState extends State<LandingScreen>
               onTap: _scrollToSection,
             ),
           ),
-
+          // Scroll Progress Indicator
+          if (!isMobile)
+            Positioned(
+              right: 20,
+              top: 120,
+              bottom: 100,
+              child: ScrollProgressIndicator(
+                controller: _scrollController,
+                activeSection: _activeSection,
+                totalSections: 11,
+                onTap: _scrollToSection,
+              ),
+            ),
           // Sticky WhatsApp Button
           Positioned(
             right: 20,
             bottom: 20,
             child: WhatsAppFloatingButton(phoneNumber: '+919823388866'),
           ),
-
           // Modern Popup Form
           if (_showPopup)
             ModernPopupForm(
@@ -358,20 +355,13 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildLottieHeroSection(double screenWidth, double screenHeight) {
-    // Mobile hero height with responsive adjustments
-    final heroHeight = screenHeight * 0.7;
-
-    // Responsive padding based on screen size
-    final horizontalPadding = screenWidth < 360 ? 16.0 : 24.0;
-    final verticalPadding = screenHeight < 600 ? 30.0 : 40.0;
-
+  Widget _buildLottieHeroSection(bool isMobile, bool isTablet) {
+    final height = isMobile ? 600.0 : (isTablet ? 650.0 : 750.0);
     return RepaintBoundary(
       child: SizedBox(
-        height: heroHeight,
+        height: height,
         child: Stack(
           children: [
-            // Background Lottie Animation
             Positioned.fill(
               child: Lottie.asset(
                 'images/landing.json',
@@ -381,8 +371,6 @@ class _LandingScreenState extends State<LandingScreen>
                 frameRate: FrameRate(60),
               ),
             ),
-
-            // Gradient Overlay
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -399,35 +387,29 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
               ),
             ),
-
-            // Main Content
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
                   physics: const NeverScrollableScrollPhysics(),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
+                    constraints: const BoxConstraints(maxWidth: 1200),
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
-                        vertical: verticalPadding,
+                        horizontal: isMobile ? 24 : (isTablet ? 40 : 60),
+                        vertical: isMobile ? 40 : 60,
                       ),
-                      child: _buildAnimatedHeroContent(screenWidth),
+                      child: _buildAnimatedHeroContent(isMobile, isTablet),
                     ),
                   ),
                 ),
               ),
             ),
-
-            // Animated Particles
-            ..._buildParticles(heroHeight, 6),
-
-            // Scroll Indicator
+            if (!isMobile) ..._buildParticles(height, 8),
             Positioned(
-              bottom: 20,
+              bottom: 30,
               left: 0,
               right: 0,
-              child: _buildScrollIndicator(),
+              child: _buildScrollIndicator(isMobile),
             ),
           ],
         ),
@@ -446,7 +428,6 @@ class _LandingScreenState extends State<LandingScreen>
             final xPos = 0.1 + (index % 5) * 0.18;
             final yPos = offset;
             final size = 1.5 + (index % 2) * 1.0;
-
             return Positioned(
               left: MediaQuery.of(context).size.width * xPos,
               top: height * yPos,
@@ -472,47 +453,39 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildAnimatedHeroContent(double screenWidth) {
-    // Responsive font sizes based on screen width
-    final titleFontSize = screenWidth < 360 ? 36.0 : 40.0;
-    final subtitleFontSize = screenWidth < 360 ? 16.0 : 18.0;
-    final badgeFontSize = screenWidth < 360 ? 10.0 : 11.0;
-    final descriptionFontSize = screenWidth < 360 ? 13.0 : 14.0;
-    final buttonFontSize = screenWidth < 360 ? 13.0 : 14.0;
-
+  Widget _buildAnimatedHeroContent(bool isMobile, bool isTablet) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Top Badge
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: screenWidth < 360 ? 14.0 : 16.0,
-            vertical: screenWidth < 360 ? 7.0 : 8.0,
+            horizontal: isMobile ? 16 : 24,
+            vertical: isMobile ? 8 : 12,
           ),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
             ),
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFFBBF24).withOpacity(0.4),
-                blurRadius: 15,
-                spreadRadius: 1,
+                blurRadius: 20,
+                spreadRadius: 2,
               ),
             ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.stars_rounded, color: Colors.white, size: 16),
-              SizedBox(width: screenWidth < 360 ? 6.0 : 8.0),
+              const Icon(Icons.stars_rounded, color: Colors.white, size: 20),
+              SizedBox(width: isMobile ? 8 : 12),
               Text(
                 'Building Excellence Since 2000',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: badgeFontSize,
+                  fontSize: isMobile ? 11 : (isTablet ? 13 : 15),
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -520,10 +493,7 @@ class _LandingScreenState extends State<LandingScreen>
             ],
           ),
         ),
-
-        SizedBox(height: screenWidth < 360 ? 24.0 : 30.0),
-
-        // Main Title with Gradient
+        SizedBox(height: isMobile ? 30 : 40),
         ShaderMask(
           shaderCallback: (bounds) {
             return const LinearGradient(
@@ -534,33 +504,30 @@ class _LandingScreenState extends State<LandingScreen>
             'SS Construction',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: titleFontSize,
+              fontSize: isMobile ? 40 : (isTablet ? 60 : 80),
               fontWeight: FontWeight.w900,
               height: 1.1,
               color: Colors.white,
-              letterSpacing: 1.2,
+              letterSpacing: 1.5,
               shadows: [
                 Shadow(
                   color: const Color(0xFFFBBF24).withOpacity(0.6),
-                  blurRadius: 25,
-                  offset: const Offset(0, 6),
+                  blurRadius: 30,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
           ),
         ),
-
-        SizedBox(height: screenWidth < 360 ? 16.0 : 20.0),
-
-        // Subtitle Box
+        SizedBox(height: isMobile ? 20 : 28),
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: screenWidth < 360 ? 16.0 : 20.0,
-            vertical: screenWidth < 360 ? 8.0 : 10.0,
+            horizontal: isMobile ? 20 : 28,
+            vertical: isMobile ? 10 : 14,
           ),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: const Color(0xFFFBBF24).withOpacity(0.3),
               width: 1,
@@ -570,52 +537,51 @@ class _LandingScreenState extends State<LandingScreen>
             'Transforming Visions into Reality',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: subtitleFontSize,
+              fontSize: isMobile ? 18 : (isTablet ? 24 : 28),
               fontWeight: FontWeight.w600,
               color: const Color(0xFFFBBF24),
-              letterSpacing: 0.8,
+              letterSpacing: 1.2,
               height: 1.3,
             ),
           ),
         ),
-
-        SizedBox(height: screenWidth < 360 ? 20.0 : 24.0),
-
-        // Description
-        Text(
-          'Leading construction company delivering innovative infrastructure solutions with precision, quality, and excellence.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: descriptionFontSize,
-            color: Colors.white.withOpacity(0.85),
-            height: 1.5,
-            letterSpacing: 0.2,
-            fontWeight: FontWeight.w400,
+        SizedBox(height: isMobile ? 24 : 32),
+        Container(
+          constraints: BoxConstraints(
+            maxWidth: isMobile ? double.infinity : (isTablet ? 600 : 700),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20),
+          child: Text(
+            'Leading construction company delivering innovative infrastructure solutions with precision, quality, and excellence.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 14 : (isTablet ? 16 : 18),
+              color: Colors.white.withOpacity(0.9),
+              height: 1.6,
+              letterSpacing: 0.3,
+              fontWeight: FontWeight.w400,
+            ),
           ),
         ),
-
-        SizedBox(height: screenWidth < 360 ? 28.0 : 35.0),
-
-        // CTA Buttons
-        Column(
-          mainAxisSize: MainAxisSize.min,
+        SizedBox(height: isMobile ? 35 : 50),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: isMobile ? 12 : 20,
+          runSpacing: isMobile ? 12 : 20,
           children: [
             _buildCTAButton(
               label: 'Explore Projects',
               icon: Icons.arrow_forward_rounded,
               isPrimary: true,
-              screenWidth: screenWidth,
-              fontSize: buttonFontSize,
-              onTap: () => _scrollToSection(3),
+              isMobile: isMobile,
+              onTap: () => _scrollToSection(2),
             ),
-            SizedBox(height: screenWidth < 360 ? 10.0 : 12.0),
             _buildCTAButton(
               label: 'Contact Us',
               icon: Icons.phone_outlined,
               isPrimary: false,
-              screenWidth: screenWidth,
-              fontSize: buttonFontSize,
-              onTap: () => _scrollToSection(11),
+              isMobile: isMobile,
+              onTap: () => _scrollToSection(10),
             ),
           ],
         ),
@@ -627,34 +593,28 @@ class _LandingScreenState extends State<LandingScreen>
     required String label,
     required IconData icon,
     required bool isPrimary,
-    required double screenWidth,
-    required double fontSize,
+    required bool isMobile,
     required VoidCallback onTap,
   }) {
-    final padding = screenWidth < 360 ? 16.0 : 20.0;
-    final verticalPadding = screenWidth < 360 ? 12.0 : 14.0;
-    final iconSize = screenWidth < 360 ? 16.0 : 18.0;
-
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Container(
-        width: double.infinity,
         decoration: BoxDecoration(
           gradient: isPrimary
               ? const LinearGradient(
                   colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
                 )
               : null,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(35),
           border: isPrimary
               ? null
               : Border.all(color: const Color(0xFFFBBF24), width: 2),
           boxShadow: [
             BoxShadow(
               color: (isPrimary ? const Color(0xFFFBBF24) : Colors.transparent)
-                  .withOpacity(0.3),
-              blurRadius: 15,
-              spreadRadius: 1,
+                  .withOpacity(0.4),
+              blurRadius: 20,
+              spreadRadius: 2,
             ),
           ],
         ),
@@ -662,27 +622,26 @@ class _LandingScreenState extends State<LandingScreen>
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(35),
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: padding,
-                vertical: verticalPadding,
+                horizontal: isMobile ? 24 : 32,
+                vertical: isMobile ? 14 : 18,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     label,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: fontSize,
+                      fontSize: isMobile ? 14 : 17,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  SizedBox(width: screenWidth < 360 ? 6.0 : 8.0),
-                  Icon(icon, color: Colors.white, size: iconSize),
+                  const SizedBox(width: 10),
+                  Icon(icon, color: Colors.white, size: isMobile ? 18 : 22),
                 ],
               ),
             ),
@@ -692,7 +651,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
-  Widget _buildScrollIndicator() {
+  Widget _buildScrollIndicator(bool isMobile) {
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _heroController,
@@ -705,16 +664,16 @@ class _LandingScreenState extends State<LandingScreen>
                   'Scroll to Explore',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
-                    fontSize: 11,
+                    fontSize: isMobile ? 11 : 14,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.5,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Icon(
+                const SizedBox(height: 8),
+                Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFFFBBF24),
-                  size: 24,
+                  color: const Color(0xFFFBBF24),
+                  size: isMobile ? 28 : 36,
                 ),
               ],
             ),
@@ -831,7 +790,6 @@ class _ModernPopupFormState extends State<ModernPopupForm>
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
   String _selectedService = 'Service 1';
-
   final List<String> _services = ['Service 1', 'Service 2', 'Service 3'];
 
   @override
@@ -841,14 +799,11 @@ class _ModernPopupFormState extends State<ModernPopupForm>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
     _scaleAnimation = CurvedAnimation(
       parent: _controller,
       curve: Curves.easeOutBack,
     );
-
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
     _controller.forward();
   }
 
@@ -892,6 +847,7 @@ I'm interested in your services.''';
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
 
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -901,9 +857,12 @@ I'm interested in your services.''';
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+              margin: EdgeInsets.symmetric(
+                horizontal: isMobile ? 20 : 40,
+                vertical: isMobile ? 40 : 60,
+              ),
               constraints: BoxConstraints(
-                maxWidth: double.infinity,
+                maxWidth: isMobile ? double.infinity : 500,
                 maxHeight: size.height * 0.9,
               ),
               decoration: BoxDecoration(
@@ -927,7 +886,7 @@ I'm interested in your services.''';
               ),
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(isMobile ? 24 : 32),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -955,30 +914,30 @@ I'm interested in your services.''';
                                       ),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       '🎉 Special Offer',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 11,
+                                        fontSize: isMobile ? 11 : 13,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  const Text(
+                                  Text(
                                     'Get a Free Quote!',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 22,
+                                      fontSize: isMobile ? 22 : 28,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  const Text(
+                                  Text(
                                     'Connect with us on WhatsApp',
                                     style: TextStyle(
                                       color: Colors.white70,
-                                      fontSize: 13,
+                                      fontSize: isMobile ? 13 : 15,
                                     ),
                                   ),
                                 ],
@@ -1036,7 +995,7 @@ I'm interested in your services.''';
                         const SizedBox(height: 16),
                         _buildDropdown(),
                         const SizedBox(height: 28),
-                        _buildSubmitButton(),
+                        _buildSubmitButton(isMobile),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -1047,7 +1006,7 @@ I'm interested in your services.''';
                               color: Colors.white54,
                             ),
                             const SizedBox(width: 6),
-                            const Text(
+                            Text(
                               'Your information is secure',
                               style: TextStyle(
                                 color: Colors.white54,
@@ -1184,7 +1143,7 @@ I'm interested in your services.''';
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(bool isMobile) {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -1204,18 +1163,18 @@ I'm interested in your services.''';
         child: InkWell(
           onTap: _submitForm,
           borderRadius: BorderRadius.circular(12),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: isMobile ? 16 : 18),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                SizedBox(width: 12),
+                const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
                 Text(
                   'Submit via WhatsApp',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: isMobile ? 16 : 18,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),
@@ -1256,8 +1215,55 @@ class FloatingNavigationBar extends StatefulWidget {
 }
 
 class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
+  int? _hoveredIndex;
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 900;
+
+    if (isMobile) {
+      return _buildMobileNav();
+    }
+
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 1400),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A1A1A), Color(0xFF0F0F0F)],
+          ),
+          borderRadius: BorderRadius.circular(60),
+          border: Border.all(
+            color: const Color(0xFFFBBF24).withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 30,
+              spreadRadius: 5,
+            ),
+            BoxShadow(
+              color: const Color(0xFFFBBF24).withOpacity(0.1),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(
+            widget.items.length,
+            (index) => _buildNavItem(index),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileNav() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
@@ -1279,7 +1285,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
         child: Row(
           children: List.generate(
             widget.items.length,
-            (index) => _buildNavItem(index),
+            (index) => _buildMobileNavItem(index),
           ),
         ),
       ),
@@ -1287,6 +1293,67 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
   }
 
   Widget _buildNavItem(int index) {
+    final isActive = widget.activeIndex == index;
+    final isHovered = _hoveredIndex == index;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: GestureDetector(
+        onTap: () => widget.onTap(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: isActive
+                ? const LinearGradient(
+                    colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                  )
+                : null,
+            color: isActive
+                ? null
+                : isHovered
+                ? const Color(0xFF2D2D2D)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(40),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFFFBBF24).withOpacity(0.5),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                widget.items[index].icon,
+                color: isActive ? Colors.white : const Color(0xFF9CA3AF),
+                size: 18,
+              ),
+              if (isActive || isHovered) ...[
+                const SizedBox(width: 8),
+                Text(
+                  widget.items[index].label,
+                  style: TextStyle(
+                    color: isActive ? Colors.white : const Color(0xFF9CA3AF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileNavItem(int index) {
     final isActive = widget.activeIndex == index;
 
     return GestureDetector(
@@ -1317,6 +1384,80 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
           widget.items[index].icon,
           color: isActive ? Colors.white : const Color(0xFF9CA3AF),
           size: 16,
+        ),
+      ),
+    );
+  }
+}
+
+// =====================================================
+// SCROLL PROGRESS INDICATOR
+// =====================================================
+class ScrollProgressIndicator extends StatelessWidget {
+  final ScrollController controller;
+  final int activeSection;
+  final int totalSections;
+  final Function(int) onTap;
+
+  const ScrollProgressIndicator({
+    super.key,
+    required this.controller,
+    required this.activeSection,
+    required this.totalSections,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A).withOpacity(0.8),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFFFBBF24).withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(
+          totalSections,
+          (index) => GestureDetector(
+            onTap: () => onTap(index),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                width: 8,
+                height: activeSection == index ? 32 : 8,
+                decoration: BoxDecoration(
+                  gradient: activeSection == index
+                      ? const LinearGradient(
+                          colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                        )
+                      : null,
+                  color: activeSection == index
+                      ? null
+                      : const Color(0xFF4B5563),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: activeSection == index
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFFBBF24).withOpacity(0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
