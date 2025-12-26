@@ -1,12 +1,10 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ss/contact.dart';
+
 import 'package:ss/landing.dart';
-import 'package:ss/new.dart';
-import 'package:ss/new2.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 void main() {
@@ -24,9 +22,7 @@ class SSConstructionCinematicApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
-        textTheme: GoogleFonts.poppinsTextTheme().apply(
-          bodyColor: Colors.white,
-        ),
+
         primaryColor: const Color(0xFFFAAB0C),
       ),
       home: const LandingScreen(),
