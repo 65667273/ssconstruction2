@@ -2,9 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:ss/landing.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 void main() {
@@ -17,15 +15,35 @@ class SSConstructionCinematicApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SS Construction ',
+      title: 'SS Construction',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: Colors.black,
-
         primaryColor: const Color(0xFFFAAB0C),
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
-      home: const LandingScreen(),
+      home: Builder(
+        builder: (context) {
+          final size = MediaQuery.of(context).size;
+          final isMobile = size.width < 600;
+          final isTablet = size.width >= 600 && size.width < 900;
+
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: ModernHeroSection(
+                isMobile: isMobile,
+                isTablet: isTablet,
+                scrollToSection: (index) {
+                  print('Section clicked: $index');
+                  // Add scroll functionality here
+                },
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
