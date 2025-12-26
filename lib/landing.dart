@@ -88,8 +88,6 @@ class _LandingScreenState extends State<LandingScreen>
       duration: const Duration(seconds: 14),
     )..repeat();
 
-    _preloadAssets();
-
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) setState(() => _showNavBar = true);
     });
@@ -98,10 +96,6 @@ class _LandingScreenState extends State<LandingScreen>
     Future.delayed(const Duration(seconds: 10), () {
       if (mounted) setState(() => _showPopup = true);
     });
-  }
-
-  void _preloadAssets() {
-    Lottie.asset('assets/images/landing.json');
   }
 
   @override
@@ -386,7 +380,6 @@ class _LandingScreenState extends State<LandingScreen>
                 fit: BoxFit.cover,
                 animate: true,
                 repeat: true,
-                frameRate: FrameRate(60),
               ),
             ),
             Positioned.fill(
